@@ -23,7 +23,7 @@
                     required
                     autofocus
                     autocomplete="username"
-                    class="surface-background-input border-secondary text-primary-neutral placeholder:text-placeholder focus:ring-primary w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2"
+                    class="surface-background-input border-secondary text-primary-neutral focus:ring-primary w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2"
                 >
             </div>
 
@@ -38,7 +38,7 @@
                     name="password"
                     required
                     autocomplete="current-password"
-                    class="surface-background-input border-secondary text-primary-neutral placeholder:text-placeholder focus:ring-primary w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2"
+                    class="surface-background-input border-secondary text-primary-neutral focus:ring-primary w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2"
                 >
             </div>
 
