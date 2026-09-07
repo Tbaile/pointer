@@ -1,0 +1,24 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+@import '@fontsource/poppins';
+
+@import './tokens/brand.css';
+@import './tokens/text.css';
+@import './tokens/elevation.css';
+@import './tokens/surface.css';
+@import './tokens/border.css';
+@import './tokens/ring.css';
+@import './tokens/icon.css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@theme {
+    --default-font-family: 'Poppins', sans-serif;
+}
+
+@layer base {
+    body {
+        @apply text-primary-neutral;
+    }
+}
