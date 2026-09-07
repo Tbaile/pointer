@@ -1,13 +1,20 @@
 <x-layouts.guest :title="__('Sign in')">
-    <div class="w-full max-w-sm elevation-0 border border-secondary rounded-xl p-8">
-        <h1 class="text-2xl font-semibold text-primary-neutral">Sign in</h1>
-        <p class="mt-1 text-sm text-secondary-neutral">Enter your credentials to continue.</p>
+    <div class="elevation-0 border-secondary w-full max-w-sm rounded-xl border p-8">
+        <h1 class="text-primary-neutral text-2xl font-semibold">Sign in</h1>
+        <p class="text-secondary-neutral mt-1 text-sm">Enter your credentials to continue.</p>
 
-        <form method="POST" action="{{ url('/login') }}" class="mt-6 space-y-4">
+        <form
+            method="POST"
+            action="{{ url('/login') }}"
+            class="mt-6 space-y-4"
+        >
             @csrf
 
             <div class="space-y-1">
-                <label for="email" class="block text-sm text-secondary-neutral">Email</label>
+                <label
+                    for="email"
+                    class="text-secondary-neutral block text-sm"
+                >Email</label>
                 <input
                     id="email"
                     type="email"
@@ -16,37 +23,45 @@
                     required
                     autofocus
                     autocomplete="username"
-                    class="w-full rounded-lg surface-background-input border border-secondary px-3 py-2 text-primary-neutral placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-primary"
+                    class="surface-background-input border-secondary text-primary-neutral placeholder:text-placeholder focus:ring-primary w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2"
                 >
             </div>
 
             <div class="space-y-1">
-                <label for="password" class="block text-sm text-secondary-neutral">Password</label>
+                <label
+                    for="password"
+                    class="text-secondary-neutral block text-sm"
+                >Password</label>
                 <input
                     id="password"
                     type="password"
                     name="password"
                     required
                     autocomplete="current-password"
-                    class="w-full rounded-lg surface-background-input border border-secondary px-3 py-2 text-primary-neutral placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-primary"
+                    class="surface-background-input border-secondary text-primary-neutral placeholder:text-placeholder focus:ring-primary w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2"
                 >
             </div>
 
-            <label class="flex items-center gap-2 text-sm text-secondary-neutral">
-                <input type="checkbox" name="remember" value="1" @checked(old('remember'))>
+            <label class="text-secondary-neutral flex items-center gap-2 text-sm">
+                <input
+                    type="checkbox"
+                    name="remember"
+                    value="1"
+                    @checked(old('remember'))
+                >
                 Remember me
             </label>
 
             @error('email')
-                <p class="text-sm text-danger">{{ $message }}</p>
+                <p class="text-danger text-sm">{{ $message }}</p>
             @enderror
             @error('password')
-                <p class="text-sm text-danger">{{ $message }}</p>
+                <p class="text-danger text-sm">{{ $message }}</p>
             @enderror
 
             <button
                 type="submit"
-                class="w-full rounded-lg bg-primary-active px-4 py-2 font-medium text-white hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary"
+                class="bg-primary-active hover:bg-primary-hover focus:ring-primary w-full rounded-lg px-4 py-2 font-medium text-white focus:outline-none focus:ring-2"
             >
                 Log in
             </button>

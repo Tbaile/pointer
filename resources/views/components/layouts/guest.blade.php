@@ -4,7 +4,10 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>{{ $title ?? config('app.name') }}</title>
 
@@ -13,7 +16,7 @@
     @fonts
 </head>
 
-<body class="min-h-screen elevation-1">
+<body class="elevation-1 min-h-screen">
     <main class="flex min-h-screen items-center justify-center px-4">
         {{ $slot }}
     </main>
