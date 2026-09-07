@@ -1,0 +1,36 @@
+/*
+ * Elevation tokens → elevation-* utility
+ */
+
+:root {
+    --elevation-0: var(--color-white);
+    --elevation-1: var(--color-gray-50);
+    --elevation-2: var(--color-gray-100);
+    --elevation-2-invert: var(--color-white);
+    --elevation-3: var(--color-gray-200);
+    --elevation-4: var(--color-gray-300);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --elevation-0: var(--color-gray-950);
+        --elevation-1: var(--color-gray-900);
+        --elevation-2: var(--color-gray-800);
+        --elevation-2-invert: var(--color-gray-950);
+        --elevation-3: var(--color-gray-700);
+        --elevation-4: var(--color-gray-600);
+    }
+}
+
+@theme inline {
+    --elevation-bg-0: var(--elevation-0);
+    --elevation-bg-1: var(--elevation-1);
+    --elevation-bg-2: var(--elevation-2);
+    --elevation-bg-2-invert: var(--elevation-2-invert);
+    --elevation-bg-3: var(--elevation-3);
+    --elevation-bg-4: var(--elevation-4);
+}
+
+@utility elevation-* {
+    background-color: --value(--elevation-bg-*);
+}

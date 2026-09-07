@@ -1,0 +1,33 @@
+/*
+ * Text colour tokens → text-* utility
+ */
+
+:root {
+    --text-primary-neutral: var(--color-gray-900);
+    --text-secondary-neutral: var(--color-gray-700);
+    --text-tertiary-neutral: var(--color-gray-600);
+    --text-placeholder: var(--color-gray-400);
+    --text-danger: var(--color-rose-700);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-primary-neutral: var(--color-gray-50);
+        --text-secondary-neutral: var(--color-gray-200);
+        --text-tertiary-neutral: var(--color-gray-300);
+        --text-placeholder: var(--color-gray-500);
+        --text-danger: var(--color-rose-500);
+    }
+}
+
+@theme inline {
+    --text-color-primary-neutral: var(--text-primary-neutral);
+    --text-color-secondary-neutral: var(--text-secondary-neutral);
+    --text-color-tertiary-neutral: var(--text-tertiary-neutral);
+    --text-color-placeholder: var(--text-placeholder);
+    --text-color-danger: var(--text-danger);
+}
+
+@utility text-* {
+    color: --value(--text-color-*);
+}

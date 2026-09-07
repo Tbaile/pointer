@@ -1,3 +1,4 @@
+@props(['title' => null])
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
@@ -10,14 +11,12 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @fonts
-
-    @livewireStyles
 </head>
 
-<body>
-    {{ $slot }}
-
-    @livewireScripts
+<body class="min-h-screen elevation-1">
+    <main class="flex min-h-screen items-center justify-center px-4">
+        {{ $slot }}
+    </main>
 </body>
 
 </html>

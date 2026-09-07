@@ -1,0 +1,24 @@
+/*
+ * Icon colour tokens → icon-* utility
+ */
+
+:root {
+    --icon-enabled: var(--color-green-700);
+    --icon-danger: var(--color-rose-700);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --icon-enabled: var(--color-green-500);
+        --icon-danger: var(--color-rose-500);
+    }
+}
+
+@theme inline {
+    --icon-color-enabled: var(--icon-enabled);
+    --icon-color-danger: var(--icon-danger);
+}
+
+@utility icon-* {
+    color: --value(--icon-color-*);
+}

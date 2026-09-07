@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 @import '@fontsource/poppins';
+@import '@fontsource/poppins/500.css';
 
 @import './tokens/brand.css';
 @import './tokens/text.css';
@@ -18,6 +19,10 @@
 }
 
 @layer base {
+    :root {
+        color-scheme: light dark;
+    }
+
     body {
         @apply text-primary-neutral;
     }

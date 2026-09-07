@@ -1,0 +1,29 @@
+/*
+ * Brand (Product Primary) tokens
+ */
+
+:root {
+    --primary-active: var(--color-cyan-700);
+    --primary-hover: var(--color-cyan-800);
+    --primary-focus: var(--color-cyan-500);
+    --primary-favicon: var(--color-cyan-500);
+    --primary-inverted-neutral: var(--color-gray-50);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-active: var(--color-cyan-500);
+        --primary-hover: var(--color-cyan-300);
+        --primary-focus: var(--color-cyan-200);
+        --primary-favicon: var(--color-cyan-600);
+        --primary-inverted-neutral: var(--color-gray-900);
+    }
+}
+
+@theme inline {
+    --color-primary-active: var(--primary-active);
+    --color-primary-hover: var(--primary-hover);
+    --color-primary-focus: var(--primary-focus);
+    --color-primary-favicon: var(--primary-favicon);
+    --color-primary-inverted-neutral: var(--primary-inverted-neutral);
+}

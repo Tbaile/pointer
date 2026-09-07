@@ -1,0 +1,23 @@
+/*
+ * Ring colour tokens → ring-* utility (sets --tw-ring-color)
+ */
+
+:root {
+    --ring-input: var(--color-gray-300);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --ring-input: var(--color-gray-500);
+    }
+}
+
+@theme inline {
+    --ring-color-input: var(--ring-input);
+    --ring-color-secondary: var(--border-color-secondary);
+    --ring-color-primary: var(--primary-focus);
+}
+
+@utility ring-* {
+    --tw-ring-color: --value(--ring-color-*);
+}

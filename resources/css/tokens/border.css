@@ -1,0 +1,31 @@
+/*
+ * Border colour tokens → border-* utility
+ */
+
+:root {
+    --border-secondary: var(--color-gray-300);
+    --border-accent-rose: var(--color-rose-700);
+    --border-error-focus: var(--color-rose-500);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --border-secondary: var(--color-gray-700);
+        --border-accent-rose: var(--color-rose-500);
+        --border-error-focus: var(--color-rose-400);
+    }
+}
+
+@theme inline {
+    --border-color-secondary: var(--border-secondary);
+    --border-color-accent-rose: var(--border-accent-rose);
+    --border-color-error-focus: var(--border-error-focus);
+}
+
+@utility border-* {
+    border-color: --value(--border-color-*);
+}
+
+@utility divide-* {
+    border-color: --value(--border-color-*);
+}

@@ -1,0 +1,30 @@
+/*
+ * Surface tokens → surface-* utility
+ */
+
+:root {
+    --surface-background-input: var(--color-white);
+    --surface-background-code: var(--color-gray-50);
+    --surface-button-danger-active: var(--color-rose-700);
+    --surface-button-danger-hover: var(--color-rose-800);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --surface-background-input: var(--color-gray-950);
+        --surface-background-code: var(--color-gray-900);
+        --surface-button-danger-active: var(--color-rose-600);
+        --surface-button-danger-hover: var(--color-rose-500);
+    }
+}
+
+@theme inline {
+    --surface-bg-background-input: var(--surface-background-input);
+    --surface-bg-background-code: var(--surface-background-code);
+    --surface-bg-button-danger-active: var(--surface-button-danger-active);
+    --surface-bg-button-danger-hover: var(--surface-button-danger-hover);
+}
+
+@utility surface-* {
+    background-color: --value(--surface-bg-*);
+}
