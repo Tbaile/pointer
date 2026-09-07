@@ -2,14 +2,17 @@
 
 use App\Models\User;
 
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\get;
+
 test('guests are redirected from the dashboard to login', function () {
-    $this->get('/')->assertRedirect('/login');
+    get('/')->assertRedirect('/login');
 });
 
 test('authenticated users can view the dashboard', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)
+    actingAs($user)
         ->get('/')
         ->assertOk()
         ->assertSee('Dashboard')
