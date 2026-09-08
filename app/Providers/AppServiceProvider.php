@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Contracts\RemoteExecutor;
+use App\Services\Remote\SanchoExecutor;
+use App\Support\Remote\SupportServerConfig;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +18,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            RemoteExecutor::class,
+            fn (): SanchoExecutor => new SanchoExecutor(SupportServerConfig::fromConfig()),
+        );
     }
 
     /**
