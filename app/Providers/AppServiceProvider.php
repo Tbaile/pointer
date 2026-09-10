@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Contracts\KnowledgeRetriever;
 use App\Contracts\RemoteExecutor;
+use App\Services\Kapa\KapaNsecRetriever;
 use App\Services\Remote\SanchoExecutor;
 use App\Support\Remote\SupportServerConfig;
 use Carbon\CarbonImmutable;
@@ -21,6 +23,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             RemoteExecutor::class,
             fn (): SanchoExecutor => new SanchoExecutor(SupportServerConfig::fromConfig()),
+        );
+
+        $this->app->bind(
+            KnowledgeRetriever::class,
+            fn (): KapaNsecRetriever => new KapaNsecRetriever(
+                apiKey: config('services.kapa.api_key'),
+                projectId: config('services.kapa.project_id'),
+            ),
         );
     }
 
