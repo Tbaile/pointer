@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('systems', function (Blueprint $table) {
             $table->id();
+            $table->string('description')->nullable();
             $table->string('sos_id');
             $table->string('machine_id');
             $table->timestamps();
