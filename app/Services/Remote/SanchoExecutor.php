@@ -3,8 +3,6 @@
 namespace App\Services\Remote;
 
 use App\Contracts\RemoteExecutor;
-use App\Support\Remote\CommandResult;
-use App\Support\Remote\SupportServerConfig;
 use Illuminate\Process\Exceptions\ProcessTimedOutException;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
@@ -39,9 +37,15 @@ final readonly class SanchoExecutor implements RemoteExecutor
      */
     private const int SESSION_ERROR_EXIT_CODE = 125;
 
-    public function __construct(private SupportServerConfig $config) {}
+    public function __construct(
+        private string $host,
+        private string $user,
+        private ?string $identityFile,
+        private int $timeout,
+        private int $maxOutputBytes,
+    ) {}
 
-    public function run(string $machineUuid, string $command): CommandResult
+    public function run(string $machineUuid, string $command): array
     {
         $this->assertValidMachineUuid($machineUuid);
 
@@ -51,7 +55,7 @@ final readonly class SanchoExecutor implements RemoteExecutor
         $startedAt = hrtime(true);
 
         try {
-            $result = Process::timeout($this->config->timeout)
+            $result = Process::timeout($this->timeout)
                 ->input($this->buildRemoteScript($command, $startMarker, $endMarker))
                 ->run($this->buildSshArguments($machineUuid));
 
@@ -61,23 +65,22 @@ final readonly class SanchoExecutor implements RemoteExecutor
         } catch (ProcessTimedOutException) {
             $rawExitCode = self::TIMEOUT_EXIT_CODE;
             $stdout = '';
-            $stderr = sprintf('Command timed out after %d seconds.', $this->config->timeout);
+            $stderr = sprintf('Command timed out after %d seconds.', $this->timeout);
         }
 
         [$stdout, $exitCode] = $this->extractCommandOutput($stdout, $rawExitCode, $startMarker, $endMarker);
 
-        $cap = $this->config->maxOutputBytes;
-        $truncated = strlen($stdout) > $cap || strlen($stderr) > $cap;
+        $truncated = strlen($stdout) > $this->maxOutputBytes || strlen($stderr) > $this->maxOutputBytes;
 
-        return new CommandResult(
-            machineUuid: $machineUuid,
-            command: $command,
-            exitCode: $exitCode,
-            stdout: substr($stdout, 0, $cap),
-            stderr: substr($stderr, 0, $cap),
-            durationMs: (int) ((hrtime(true) - $startedAt) / 1_000_000),
-            truncated: $truncated,
-        );
+        return [
+            'machine_uuid' => $machineUuid,
+            'command' => $command,
+            'exit_code' => $exitCode,
+            'stdout' => substr($stdout, 0, $this->maxOutputBytes),
+            'stderr' => substr($stderr, 0, $this->maxOutputBytes),
+            'duration_ms' => (int) ((hrtime(true) - $startedAt) / 1_000_000),
+            'truncated' => $truncated,
+        ];
     }
 
     /**
@@ -115,14 +118,14 @@ final readonly class SanchoExecutor implements RemoteExecutor
             '-o', 'LogLevel=ERROR',
         ];
 
-        if ($this->config->identityFile !== null) {
+        if ($this->identityFile !== null) {
             $arguments[] = '-o';
             $arguments[] = 'IdentitiesOnly=yes';
             $arguments[] = '-i';
-            $arguments[] = $this->config->identityFile;
+            $arguments[] = $this->identityFile;
         }
 
-        $arguments[] = $this->config->user.'@'.$this->config->host;
+        $arguments[] = $this->user.'@'.$this->host;
         $arguments[] = $this->buildSupportServerCommand($machineUuid);
 
         return $arguments;

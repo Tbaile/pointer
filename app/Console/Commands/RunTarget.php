@@ -17,8 +17,7 @@ use Illuminate\Console\Command;
  */
 #[Signature('pointer:run
     {uuid : The target machine identifier}
-    {--command=uname -a : The command to run on the target}
-    {--result-only : Print only the command\'s stdout/stderr, without the info line or exit-code table}')]
+    {--command=uname -a : The command to run on the target}')]
 #[Description('Run a command on a target machine through the support server')]
 class RunTarget extends Command
 {
@@ -26,36 +25,17 @@ class RunTarget extends Command
     {
         $uuid = (string) $this->argument('uuid');
         $command = (string) $this->option('command');
-        $resultOnly = (bool) $this->option('result-only');
-
-        if (! $resultOnly) {
-            $this->components->info(sprintf('Running [%s] on %s', $command, $uuid));
-        }
 
         $result = $executor->run($uuid, $command);
 
-        if (! $resultOnly) {
-            $this->components->twoColumnDetail('Exit code', (string) $result->exitCode);
-            $this->components->twoColumnDetail('Duration', $result->durationMs.'ms');
-            $this->components->twoColumnDetail('Truncated', $result->truncated ? 'yes' : 'no');
+        if ($result['stdout'] !== '') {
+            $this->line($result['stdout']);
         }
 
-        if ($result->stdout !== '') {
-            if (! $resultOnly) {
-                $this->newLine();
-            }
-            $this->line($result->stdout);
+        if ($result['exit_code'] !== 0) {
+            $this->components->error($result['stderr']);
         }
 
-        if ($result->stderr !== '') {
-            if (! $resultOnly) {
-                $this->newLine();
-                $this->components->error($result->stderr);
-            } else {
-                $this->line($result->stderr);
-            }
-        }
-
-        return $result->successful() ? self::SUCCESS : self::FAILURE;
+        return $result['exit_code'] === 0 ? self::SUCCESS : self::FAILURE;
     }
 }

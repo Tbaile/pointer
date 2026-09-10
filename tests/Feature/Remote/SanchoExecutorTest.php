@@ -2,26 +2,18 @@
 
 use App\Contracts\RemoteExecutor;
 use App\Services\Remote\SanchoExecutor;
-use App\Support\Remote\SupportServerConfig;
 use Illuminate\Process\PendingProcess;
 use Illuminate\Support\Facades\Process;
 
-beforeEach(function () {
-    config()->set('pointer.support', [
-        'host' => 'support.example.com',
-        'user' => 'pointer',
-        'identity_file' => '/etc/pointer/id_ed25519',
-    ]);
-
-    config()->set('pointer.execution', [
-        'timeout' => 30,
-        'max_output_bytes' => 64,
-    ]);
-});
-
 function executor(): SanchoExecutor
 {
-    return new SanchoExecutor(SupportServerConfig::fromConfig());
+    return new SanchoExecutor(
+        host: 'support.example.com',
+        user: 'pointer',
+        identityFile: '/etc/pointer/id_ed25519',
+        timeout: 30,
+        maxOutputBytes: 64,
+    );
 }
 
 /**
@@ -61,11 +53,15 @@ test('it reaches the target through the support server', function () {
 });
 
 test('it resolves a relative identity file against the storage path', function () {
-    config()->set('pointer.support.identity_file', 'app/private/pointer');
+    config()->set('pointer.support', [
+        'host' => 'support.example.com',
+        'user' => 'pointer',
+        'identity_file' => 'app/private/pointer',
+    ]);
 
     Process::fake();
 
-    executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a');
+    app(RemoteExecutor::class)->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a');
 
     Process::assertRan(fn (PendingProcess $process): bool => in_array(
         storage_path('app/private/pointer'),
@@ -103,12 +99,11 @@ test('it isolates the command output and exit code from the session banner', fun
 
     $result = executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a');
 
-    expect($result->exitCode)->toBe(3)
-        ->and($result->stdout)->toBe("Linux ns8\n")
-        ->and($result->failed())->toBeTrue()
-        ->and($result->truncated)->toBeFalse()
-        ->and($result->machineUuid)->toBe('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b')
-        ->and($result->command)->toBe('uname -a');
+    expect($result['exit_code'])->toBe(3)
+        ->and($result['stdout'])->toBe("Linux ns8\n")
+        ->and($result['truncated'])->toBeFalse()
+        ->and($result['machine_uuid'])->toBe('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b')
+        ->and($result['command'])->toBe('uname -a');
 });
 
 test('it truncates output beyond the configured cap', function () {
@@ -116,8 +111,8 @@ test('it truncates output beyond the configured cap', function () {
 
     $result = executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'cat /var/log/messages');
 
-    expect($result->stdout)->toHaveLength(64)
-        ->and($result->truncated)->toBeTrue();
+    expect($result['stdout'])->toHaveLength(64)
+        ->and($result['truncated'])->toBeTrue();
 });
 
 test('it falls back to the raw exit code when the session fails before the markers appear', function () {
@@ -125,8 +120,8 @@ test('it falls back to the raw exit code when the session fails before the marke
 
     $result = executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a');
 
-    expect($result->exitCode)->toBe(255)
-        ->and($result->stderr)->toBe("Permission denied\n");
+    expect($result['exit_code'])->toBe(255)
+        ->and($result['stderr'])->toBe("Permission denied\n");
 });
 
 test('it passes stderr through untouched, leaving noise suppression to the ssh client', function () {
@@ -138,7 +133,7 @@ test('it passes stderr through untouched, leaving noise suppression to the ssh c
 
     $result = executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a');
 
-    expect($result->stderr)->toBe("Permission denied (publickey).\n");
+    expect($result['stderr'])->toBe("Permission denied (publickey).\n");
 });
 
 test('it fails loudly when no support server is configured', function () {

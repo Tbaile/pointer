@@ -6,12 +6,12 @@ use App\Contracts\KnowledgeRetriever;
 use App\Contracts\RemoteExecutor;
 use App\Services\Kapa\KapaNsecRetriever;
 use App\Services\Remote\SanchoExecutor;
-use App\Support\Remote\SupportServerConfig;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,7 +22,28 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(
             RemoteExecutor::class,
-            fn (): SanchoExecutor => new SanchoExecutor(SupportServerConfig::fromConfig()),
+            function (): SanchoExecutor {
+                $host = config('pointer.support.host');
+
+                if (! is_string($host) || $host === '') {
+                    throw new RuntimeException(
+                        'No support server configured. Set POINTER_SUPPORT_HOST in your environment.',
+                    );
+                }
+
+                $identityFile = config('pointer.support.identity_file');
+                $identityFile = is_string($identityFile) && $identityFile !== ''
+                    ? (str_starts_with($identityFile, '/') ? $identityFile : storage_path($identityFile))
+                    : null;
+
+                return new SanchoExecutor(
+                    host: $host,
+                    user: config('pointer.support.user'),
+                    identityFile: $identityFile,
+                    timeout: config('pointer.execution.timeout'),
+                    maxOutputBytes: config('pointer.execution.max_output_bytes'),
+                );
+            },
         );
 
         $this->app->bind(
