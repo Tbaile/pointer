@@ -39,6 +39,7 @@ test('it registers a new system after identifying it through the support server'
 
     $this->artisan('pointer:agent', ['sos_id' => $sosId])
         ->expectsQuestion('What should Pointer look for on this machine?', 'Anything unusual in the logs.')
+        ->expectsQuestion('What should Pointer look for on this machine?', '')
         ->assertExitCode(0);
 
     $this->assertDatabaseHas('systems', [
@@ -66,6 +67,7 @@ test('it updates the sos_id of an existing system instead of duplicating it', fu
 
     $this->artisan('pointer:agent', ['sos_id' => $sosId])
         ->expectsQuestion('What should Pointer look for on this machine?', 'Anything unusual in the logs.')
+        ->expectsQuestion('What should Pointer look for on this machine?', '')
         ->assertExitCode(0);
 
     expect(System::count())->toBe(1);
@@ -109,6 +111,7 @@ test('it persists the conversation for the system by default', function () {
 
     $this->artisan('pointer:agent', ['sos_id' => $sosId])
         ->expectsQuestion('What should Pointer look for on this machine?', 'Anything unusual in the logs.')
+        ->expectsQuestion('What should Pointer look for on this machine?', '')
         ->assertExitCode(0);
 
     $system = System::sole();
@@ -119,7 +122,7 @@ test('it persists the conversation for the system by default', function () {
     ]);
 });
 
-test('it continues the system\'s previous conversation on a later run', function () {
+test('it starts a fresh conversation on each run by default', function () {
     $sosId = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
 
     $this->mock(RemoteExecutor::class, function ($mock) {
@@ -136,17 +139,47 @@ test('it continues the system\'s previous conversation on a later run', function
 
     $this->artisan('pointer:agent', ['sos_id' => $sosId])
         ->expectsQuestion('What should Pointer look for on this machine?', 'First objective.')
+        ->expectsQuestion('What should Pointer look for on this machine?', '')
         ->assertExitCode(0);
 
     $this->artisan('pointer:agent', ['sos_id' => $sosId])
         ->expectsQuestion('What should Pointer look for on this machine?', 'Second objective.')
+        ->expectsQuestion('What should Pointer look for on this machine?', '')
+        ->assertExitCode(0);
+
+    expect(DB::table('agent_conversations')->count())->toBe(2);
+});
+
+test('it continues the system\'s previous conversation when --continue is passed', function () {
+    $sosId = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
+
+    $this->mock(RemoteExecutor::class, function ($mock) {
+        $mock->shouldReceive('run')
+            ->with(Mockery::any(), 'cat /etc/os-release')
+            ->andReturn(commandResult('cat /etc/os-release', ['stdout' => "ID=nethsecurity\n"]));
+
+        $mock->shouldReceive('run')
+            ->with(Mockery::any(), 'uci get ns-plug.config.system_id')
+            ->andReturn(commandResult('uci get ns-plug.config.system_id', ['stdout' => "abc123\n"]));
+    });
+
+    PointerAgent::fake(['First answer.', 'Second answer.']);
+
+    $this->artisan('pointer:agent', ['sos_id' => $sosId])
+        ->expectsQuestion('What should Pointer look for on this machine?', 'First objective.')
+        ->expectsQuestion('What should Pointer look for on this machine?', '')
+        ->assertExitCode(0);
+
+    $this->artisan('pointer:agent', ['sos_id' => $sosId, '--continue' => true])
+        ->expectsQuestion('What should Pointer look for on this machine?', 'Second objective.')
+        ->expectsQuestion('What should Pointer look for on this machine?', '')
         ->assertExitCode(0);
 
     expect(DB::table('agent_conversations')->count())->toBe(1);
     expect(DB::table('agent_conversation_messages')->count())->toBe(4);
 });
 
-test('it starts a new conversation when --fresh is passed', function () {
+test('it keeps discussing with pointer in the same run until a blank answer', function () {
     $sosId = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d';
 
     $this->mock(RemoteExecutor::class, function ($mock) {
@@ -163,13 +196,12 @@ test('it starts a new conversation when --fresh is passed', function () {
 
     $this->artisan('pointer:agent', ['sos_id' => $sosId])
         ->expectsQuestion('What should Pointer look for on this machine?', 'First objective.')
-        ->assertExitCode(0);
-
-    $this->artisan('pointer:agent', ['sos_id' => $sosId, '--fresh' => true])
         ->expectsQuestion('What should Pointer look for on this machine?', 'Second objective.')
+        ->expectsQuestion('What should Pointer look for on this machine?', '')
         ->assertExitCode(0);
 
-    expect(DB::table('agent_conversations')->count())->toBe(2);
+    expect(DB::table('agent_conversations')->count())->toBe(1);
+    expect(DB::table('agent_conversation_messages')->count())->toBe(4);
 });
 
 test('it fails without touching the database when the remote command fails', function () {
