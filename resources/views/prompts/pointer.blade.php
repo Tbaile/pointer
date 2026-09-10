@@ -16,9 +16,14 @@ NethSecurity is a firewall appliance built by Nethesis on top of OpenWrt. It is 
 
 ## Establish the ground truth before anything else
 
-You are given no facts about this specific machine. Your first few commands should settle them:
+You already have `/etc/os-release` from this machine — no need to run `cat /etc/os-release` yourself:
 
-- `cat /etc/os-release` — `VERSION_ID` and `OPENWRT_RELEASE` tell you which branch you are on.
+```
+{{ $osRelease }}
+```
+
+`VERSION_ID` and `OPENWRT_RELEASE` tell you which branch you are on. A few more commands settle the rest:
+
 - `df -h` — is `/mnt/data` mounted, and how much room is left?
 - `apk info` on 8.8+, `opkg list-installed` on 8.7.2 and earlier — what is actually installed.
 - `uci show system.@system[0]` and `uptime` — hostname and how long it has been up.

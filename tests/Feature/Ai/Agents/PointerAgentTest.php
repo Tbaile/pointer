@@ -4,7 +4,7 @@ use App\Ai\Agents\PointerAgent;
 use App\Contracts\RemoteExecutor;
 use App\Enums\SystemType;
 
-function pointerAgent(SystemType $system = SystemType::NethSecurity): PointerAgent
+function pointerAgent(SystemType $system = SystemType::NethSecurity, string $osRelease = "ID=nethsecurity\n"): PointerAgent
 {
     $executor = new class implements RemoteExecutor
     {
@@ -14,7 +14,7 @@ function pointerAgent(SystemType $system = SystemType::NethSecurity): PointerAge
         }
     };
 
-    return new PointerAgent($executor, 'a1b2c3d4-0000-0000-0000-000000000000', $system);
+    return new PointerAgent($executor, 'a1b2c3d4-0000-0000-0000-000000000000', $system, $osRelease);
 }
 
 test('it is constructed for a given system type', function () {
@@ -23,9 +23,11 @@ test('it is constructed for a given system type', function () {
 });
 
 test('it renders its instructions from the prompt view', function () {
-    $instructions = pointerAgent()->instructions();
+    $osRelease = "ID=nethsecurity\n";
 
-    expect($instructions)->toBe(view('prompts.pointer')->render());
+    $instructions = pointerAgent(osRelease: $osRelease)->instructions();
+
+    expect($instructions)->toBe(view('prompts.pointer', ['osRelease' => $osRelease])->render());
     expect($instructions)->not->toBeEmpty();
 });
 
@@ -38,4 +40,19 @@ test('it tells the agent what kind of system it is investigating', function () {
         ->toContain('uci')
         ->toContain('api-cli')
         ->toContain('You are read-only.');
+});
+
+test('it gives the agent the already-fetched os-release output', function () {
+    $osRelease = "ID=nethsecurity\nVERSION_ID=8.8.0\n";
+
+    $instructions = pointerAgent(osRelease: $osRelease)->instructions();
+
+    expect($instructions)->toContain($osRelease);
+});
+
+test('it throws for a system type it does not yet support', function () {
+    $agent = pointerAgent(SystemType::NethServer);
+
+    expect(fn () => $agent->instructions())->toThrow(RuntimeException::class, 'Unsupported system type: nethserver');
+    expect(fn () => $agent->tools())->toThrow(RuntimeException::class, 'Unsupported system type: nethserver');
 });

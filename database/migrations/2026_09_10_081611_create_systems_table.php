@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('description')->nullable();
             $table->string('sos_id');
             $table->string('machine_id');
+            $table->string('type');
             $table->timestamps();
         });
     }

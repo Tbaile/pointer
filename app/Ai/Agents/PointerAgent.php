@@ -17,6 +17,7 @@ use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Promptable;
 use Laravel\Ai\Providers\Tools\ProviderTool;
+use RuntimeException;
 use Stringable;
 
 #[Provider(Lab::OpenAI)]
@@ -30,6 +31,7 @@ class PointerAgent implements Agent, Conversational, HasTools
         private readonly RemoteExecutor $executor,
         private readonly string $sosId,
         public readonly SystemType $system,
+        private readonly string $osRelease,
     ) {}
 
     /**
@@ -37,7 +39,10 @@ class PointerAgent implements Agent, Conversational, HasTools
      */
     public function instructions(): Stringable|string
     {
-        return view('prompts.pointer')->render();
+        return match ($this->system) {
+            SystemType::NethSecurity => view('prompts.pointer', ['osRelease' => $this->osRelease])->render(),
+            default => throw new RuntimeException("Unsupported system type: {$this->system->value}"),
+        };
     }
 
     /**
@@ -47,9 +52,12 @@ class PointerAgent implements Agent, Conversational, HasTools
      */
     public function tools(): iterable
     {
-        return [
-            app(SearchNsecDocumentation::class),
-            new RunRemoteCommand($this->executor, $this->sosId),
-        ];
+        return match ($this->system) {
+            SystemType::NethSecurity => [
+                app(SearchNsecDocumentation::class),
+                new RunRemoteCommand($this->executor, $this->sosId),
+            ],
+            default => throw new RuntimeException("Unsupported system type: {$this->system->value}"),
+        };
     }
 }

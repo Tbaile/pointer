@@ -30,25 +30,27 @@ class PointerRun extends Command
 
         $id = $this->parseOsReleaseId($osRelease['stdout']);
 
-        if ($id !== SystemType::NethSecurity->value) {
-            throw new RuntimeException("Unsupported system: {$id}");
+        $nethSecurity = $executor->run($sosId, 'uci get ns-plug.config.system_id');
+
+        if ($nethSecurity['exit_code'] === 0) {
+            $type = SystemType::NethSecurity;
+            $machineId = $this->trimShellValue($nethSecurity['stdout']);
+        } else {
+            $nethServer = $executor->run($sosId, 'api-cli run cluster/get-subscription | jq .subscription.system_id');
+
+            if ($nethServer['exit_code'] !== 0) {
+                throw new RuntimeException("Unsupported system: {$id}");
+            }
+
+            $type = SystemType::NethServer;
+            $machineId = $this->trimShellValue($nethServer['stdout']);
         }
 
-        $systemId = $executor->run($sosId, 'uci get ns-plug.config.system_id');
-
-        if ($systemId['exit_code'] !== 0) {
-            $this->components->error($systemId['stderr']);
-
-            return self::FAILURE;
-        }
-
-        $machineId = trim($systemId['stdout']);
-
-        $system = System::updateOrCreate(['machine_id' => $machineId], ['sos_id' => $sosId]);
+        $system = System::updateOrCreate(['machine_id' => $machineId], ['sos_id' => $sosId, 'type' => $type]);
 
         $this->components->info("Registered system: sos_id={$sosId} machine_id={$machineId}");
 
-        $agent = new PointerAgent($executor, $sosId, SystemType::NethSecurity);
+        $agent = new PointerAgent($executor, $sosId, $system->type, $osRelease['stdout']);
 
         if ($this->option('continue')) {
             $agent->continueLastConversation($system);
@@ -90,6 +92,11 @@ class PointerRun extends Command
     {
         preg_match('/^ID=(.*)$/m', $osRelease, $matches);
 
-        return trim($matches[1] ?? '', " \t\n\r\0\x0B\"'");
+        return $this->trimShellValue($matches[1] ?? '');
+    }
+
+    private function trimShellValue(string $value): string
+    {
+        return trim($value, " \t\n\r\0\x0B\"'");
     }
 }
