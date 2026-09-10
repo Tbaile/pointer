@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Ai\Agents\PointerAgent;
 use App\Contracts\RemoteExecutor;
+use App\Enums\SystemType;
 use App\Models\System;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -29,7 +30,7 @@ class PointerRun extends Command
 
         $id = $this->parseOsReleaseId($osRelease['stdout']);
 
-        if ($id !== 'nethsecurity') {
+        if ($id !== SystemType::NethSecurity->value) {
             throw new RuntimeException("Unsupported system: {$id}");
         }
 
@@ -49,7 +50,7 @@ class PointerRun extends Command
 
         $objective = $this->ask('What should Pointer look for on this machine?');
 
-        $agent = new PointerAgent($executor, $sosId);
+        $agent = new PointerAgent($executor, $sosId, SystemType::NethSecurity);
 
         if ($this->option('fresh')) {
             $agent->forParticipant($system);

@@ -4,4 +4,5 @@ public/build
 storage
 resources/css
 resources/js
+resources/views/prompts
 *.min.*

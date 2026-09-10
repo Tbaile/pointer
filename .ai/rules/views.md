@@ -5,6 +5,8 @@ paths:
 
 # Views
 
+These rules cover views rendered for a user. `resources/views/prompts/**` is model-facing prompt text and is exempt — see `.ai/rules/prompts.md`.
+
 ## Style with semantic design-token utilities, not raw Tailwind palette
 Use the project's token utilities for every color, elevation, border, ring and icon: `text-*`, `surface-*`, `elevation-*`, `border-*`, `ring-*`, `icon-*`, `divide-*` (e.g. `text-primary-neutral`, `surface-background-input`, `elevation-0`, `border-secondary`, `text-danger`).
 
