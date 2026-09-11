@@ -6,6 +6,9 @@ use App\Enums\SystemType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property SystemType $type
+ */
 #[Fillable(['sos_id', 'machine_id', 'type'])]
 class System extends Model
 {
