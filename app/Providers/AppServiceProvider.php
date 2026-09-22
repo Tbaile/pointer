@@ -2,9 +2,7 @@
 
 namespace App\Providers;
 
-use App\Contracts\KnowledgeRetriever;
 use App\Contracts\RemoteExecutor;
-use App\Services\Kapa\KapaNsecRetriever;
 use App\Services\Remote\SanchoExecutor;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -44,14 +42,6 @@ class AppServiceProvider extends ServiceProvider
                     maxOutputBytes: config('pointer.execution.max_output_bytes'),
                 );
             },
-        );
-
-        $this->app->bind(
-            KnowledgeRetriever::class,
-            fn (): KapaNsecRetriever => new KapaNsecRetriever(
-                apiKey: config('services.kapa.api_key'),
-                projectId: config('services.kapa.project_id'),
-            ),
         );
     }
 

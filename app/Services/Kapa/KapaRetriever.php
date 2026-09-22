@@ -9,9 +9,16 @@ use Illuminate\Support\Facades\Http;
  * Queries kapa.ai's retrieval endpoint: semantic search over a project's
  * ingested knowledge sources, without LLM generation on top of the results.
  */
-final class KapaNsecRetriever implements KnowledgeRetriever
+final class KapaRetriever implements KnowledgeRetriever
 {
-    public function __construct(private string $apiKey, private string $projectId) {}
+    /**
+     * @param  list<string>  $sourceGroupIds
+     */
+    public function __construct(
+        private string $apiKey,
+        private string $projectId,
+        private array $sourceGroupIds,
+    ) {}
 
     private const string BASE_URL = 'https://api.kapa.ai';
 
@@ -27,9 +34,7 @@ final class KapaNsecRetriever implements KnowledgeRetriever
                 [
                     'query' => $query,
                     'top_k' => 3,
-                    'source_group_ids_include' => [
-                        '5ea2f7fd-9fe2-405b-baa2-5682c38d654a',
-                    ],
+                    'source_group_ids_include' => $this->sourceGroupIds,
                     'user' => [
                         'unique_client_id' => 'Pointer AI Tool',
                     ],

@@ -1,17 +1,17 @@
 <?php
 
-use App\Services\Kapa\KapaNsecRetriever;
+use App\Services\Kapa\KapaRetriever;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
-function retriever(): KapaNsecRetriever
+function retriever(): KapaRetriever
 {
-    return new KapaNsecRetriever('test-api-key', '0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b');
+    return new KapaRetriever('test-api-key', '0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', ['5ea2f7fd-9fe2-405b-baa2-5682c38d654a']);
 }
 
-test('it sends the query to the retrieval endpoint with the api key header', function () {
+test('it sends the query to the retrieval endpoint with the api key header and source group ids', function () {
     Http::fake();
 
     retriever()->retrieve('how do I reset a password?');
@@ -21,7 +21,8 @@ test('it sends the query to the retrieval endpoint with the api key header', fun
             && $request->method() === 'POST'
             && $request->hasHeader('X-API-KEY', 'test-api-key')
             && $request->data()['query'] === 'how do I reset a password?'
-            && $request->data()['top_k'] === 3;
+            && $request->data()['top_k'] === 3
+            && $request->data()['source_group_ids_include'] === ['5ea2f7fd-9fe2-405b-baa2-5682c38d654a'];
     });
 });
 
