@@ -3,7 +3,7 @@
 namespace App\Mcp\Servers;
 
 use App\Mcp\Prompts\PointerPrompt;
-use App\Mcp\Tools\NethSecurity\FirewallStatus;
+use App\Mcp\Tools\NethSecurity\ListDevices;
 use App\Mcp\Tools\SearchNethvoiceDocumentation;
 use App\Mcp\Tools\SearchNs8Documentation;
 use App\Mcp\Tools\SearchNsecDocumentation;
@@ -20,7 +20,7 @@ class PointerServer extends Server
 {
     protected array $tools = [
         WhatIsIt::class,
-        FirewallStatus::class,
+        ListDevices::class,
         SearchNsecDocumentation::class,
         SearchNs8Documentation::class,
         SearchNethvoiceDocumentation::class,
