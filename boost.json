@@ -12,7 +12,6 @@
     "sail": false,
     "skills": [
         "infer-conventions",
-        "ai-sdk-development",
         "fortify-development",
         "laravel-best-practices",
         "testing-best-practices",

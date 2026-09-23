@@ -1,28 +1,16 @@
 <?php
 
-use App\Ai\Tools\SearchNsecDocumentation;
 use App\Contracts\KnowledgeRetriever;
 use App\Mcp\Tools\SearchNethvoiceDocumentation;
 use App\Mcp\Tools\SearchNs8Documentation;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
-use Laravel\Ai\Tools\Request as AiRequest;
 use Laravel\Mcp\Request as McpRequest;
 
 test('the default knowledge retriever queries the nsec source group', function () {
     Http::fake();
 
     app(KnowledgeRetriever::class)->retrieve('query');
-
-    Http::assertSent(fn (Request $request): bool => $request->data()['source_group_ids_include'] === [
-        '5ea2f7fd-9fe2-405b-baa2-5682c38d654a',
-    ]);
-});
-
-test('the ai agent nsec tool is bound a retriever scoped to the nsec source group', function () {
-    Http::fake();
-
-    app(SearchNsecDocumentation::class)->handle(new AiRequest(['query' => 'query']));
 
     Http::assertSent(fn (Request $request): bool => $request->data()['source_group_ids_include'] === [
         '5ea2f7fd-9fe2-405b-baa2-5682c38d654a',

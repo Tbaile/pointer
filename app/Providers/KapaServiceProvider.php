@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Ai\Tools\SearchNsecDocumentation;
 use App\Contracts\KnowledgeRetriever;
 use App\Mcp\Tools\SearchNethvoiceDocumentation;
 use App\Mcp\Tools\SearchNs8Documentation;
@@ -24,14 +23,6 @@ class KapaServiceProvider extends ServiceProvider
                 sourceGroupIds: ['5ea2f7fd-9fe2-405b-baa2-5682c38d654a'],
             ),
         );
-
-        $this->app->when(SearchNsecDocumentation::class)
-            ->needs(KnowledgeRetriever::class)
-            ->give(fn (): KapaRetriever => new KapaRetriever(
-                apiKey: config('services.kapa.api_key'),
-                projectId: config('services.kapa.project_id'),
-                sourceGroupIds: ['5ea2f7fd-9fe2-405b-baa2-5682c38d654a'],
-            ));
 
         $this->app->when(SearchNs8Documentation::class)
             ->needs(KnowledgeRetriever::class)
