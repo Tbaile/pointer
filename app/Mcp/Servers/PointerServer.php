@@ -8,6 +8,9 @@ use App\Mcp\Tools\NethSecurity\GetUciConfig;
 use App\Mcp\Tools\NethSecurity\GetUciSection;
 use App\Mcp\Tools\NethSecurity\ListDevices;
 use App\Mcp\Tools\NethSecurity\ListUciConfigs;
+use App\Mcp\Tools\NethSecurity\Ping;
+use App\Mcp\Tools\NethSecurity\TcpProbe;
+use App\Mcp\Tools\NethSecurity\Traceroute;
 use App\Mcp\Tools\NethSecurity\VictoriaQuery;
 use App\Mcp\Tools\RecordDiagnosis;
 use App\Mcp\Tools\RequestTool;
@@ -41,6 +44,9 @@ class PointerServer extends Server
         ListUciConfigs::class,
         GetUciConfig::class,
         GetUciSection::class,
+        Ping::class,
+        Traceroute::class,
+        TcpProbe::class,
         SearchNsecDocumentation::class,
         SearchNs8Documentation::class,
         SearchNethvoiceDocumentation::class,
