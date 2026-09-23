@@ -8,9 +8,15 @@ use Illuminate\JsonSchema\Types\Type;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
+use Laravel\Mcp\Server\Attributes\Title;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
+use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 use Throwable;
 
+#[Title('Search NethSecurity Documentation')]
+#[IsReadOnly]
+#[IsOpenWorld]
 #[Description('Search the NethSecurity documentation for information relevant to a natural-language query, via semantic retrieval over kapa.ai.')]
 class SearchNsecDocumentation extends Tool
 {

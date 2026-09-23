@@ -9,9 +9,15 @@ use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
+use Laravel\Mcp\Server\Attributes\Title;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
+use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 use Throwable;
 
+#[Title('Query VictoriaMetrics')]
+#[IsReadOnly]
+#[IsOpenWorld(false)]
 #[Description(<<<'DESCRIPTION'
     Read-only query of the VictoriaMetrics database on a NethSecurity firewall, using PromQL/MetricsQL.
     It holds up to a year of system metrics (CPU, memory, disk, disk I/O, network interfaces, conntrack, DNS, services, MultiWAN, HA, ...) and the history of every alert raised by vmalert.

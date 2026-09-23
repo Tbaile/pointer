@@ -6,7 +6,13 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Server\Attributes\Description;
+use Laravel\Mcp\Server\Attributes\Title;
+use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
+use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
+#[Title('Read UCI Configuration')]
+#[IsReadOnly]
+#[IsOpenWorld(false)]
 #[Description(<<<'DESCRIPTION'
     Read the sections of a UCI configuration of a NethSecurity firewall, e.g. `network`, `firewall`, `mwan3`, `dhcp`, `openvpn`, `ipsec`, `fstab`, as `{"values": {<section>: {<option>: <value>, ...}}}`. Each section carries its `.name`, `.type` and `.index`; list options are arrays. Secrets are masked.
     Narrow large configurations with `type` and/or `match`, e.g. type `rule` with match `{"target": "DROP"}` in `firewall`. ListUciConfigs lists every configuration present, GetUciSection reads a single section.

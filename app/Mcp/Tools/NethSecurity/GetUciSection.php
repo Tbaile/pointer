@@ -6,7 +6,13 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Server\Attributes\Description;
+use Laravel\Mcp\Server\Attributes\Title;
+use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
+use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
+#[Title('Read UCI Section')]
+#[IsReadOnly]
+#[IsOpenWorld(false)]
 #[Description(<<<'DESCRIPTION'
     Read a single section of a UCI configuration of a NethSecurity firewall, as `{"values": {<option>: <value>, ...}}` with its `.name` and `.type`; list options are arrays. Secrets are masked.
     A section that does not exist yields the error "ubus did not return a JSON object". GetUciConfig reads every section of a configuration.
