@@ -6,7 +6,7 @@ use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 
 /**
- * @param  array<string, array<string, mixed>>  $results  result overrides keyed by command
+ * @param  array<string, string|Throwable>  $results  stdout or failure keyed by command
  */
 function fakeWhatIsItExecutor(array $results = [], ?Throwable $throws = null): RemoteExecutor
 {
@@ -19,24 +19,18 @@ function fakeWhatIsItExecutor(array $results = [], ?Throwable $throws = null): R
 
         public function __construct(private array $results, private ?Throwable $throws) {}
 
-        public function run(string $machineUuid, string $command): array
+        public function run(string $machineUuid, string $command): string
         {
             $this->calledWithMachineUuid = $machineUuid;
             $this->calledWithCommands[] = $command;
 
-            if ($this->throws) {
-                throw $this->throws;
+            $result = $this->throws ?? $this->results[$command] ?? '';
+
+            if ($result instanceof Throwable) {
+                throw $result;
             }
 
-            return array_merge([
-                'machine_uuid' => $machineUuid,
-                'command' => $command,
-                'exit_code' => 0,
-                'stdout' => '',
-                'stderr' => '',
-                'duration_ms' => 1,
-                'truncated' => false,
-            ], $this->results[$command] ?? []);
+            return $result;
         }
     };
 }
@@ -48,7 +42,7 @@ function whatIsIt(RemoteExecutor $executor): Response
 
 test('it identifies NethSecurity from os-release alone', function () {
     $executor = fakeWhatIsItExecutor([
-        'cat /etc/os-release' => ['stdout' => "NAME=\"NethSecurity\"\nID=nethsecurity\nVERSION_ID=\"8.8.0\"\n"],
+        'cat /etc/os-release' => "NAME=\"NethSecurity\"\nID=nethsecurity\nVERSION_ID=\"8.8.0\"\n",
     ]);
 
     $result = whatIsIt($executor);
@@ -61,8 +55,8 @@ test('it identifies NethSecurity from os-release alone', function () {
 
 test('it identifies NethServer 8 when core.env is present', function () {
     $executor = fakeWhatIsItExecutor([
-        'cat /etc/os-release' => ['stdout' => "NAME=\"Rocky Linux\"\nID=\"rocky\"\n"],
-        'cat /etc/nethserver/core.env' => ['stdout' => "NODE_ID=1\n"],
+        'cat /etc/os-release' => "NAME=\"Rocky Linux\"\nID=\"rocky\"\n",
+        'cat /etc/nethserver/core.env' => "NODE_ID=1\n",
     ]);
 
     $result = whatIsIt($executor);
@@ -74,8 +68,8 @@ test('it identifies NethServer 8 when core.env is present', function () {
 
 test('it returns an unsupported error when neither NethSecurity nor NethServer 8', function () {
     $result = whatIsIt(fakeWhatIsItExecutor([
-        'cat /etc/os-release' => ['stdout' => "ID=ubuntu\n"],
-        'cat /etc/nethserver/core.env' => ['exit_code' => 1, 'stderr' => 'No such file or directory'],
+        'cat /etc/os-release' => "ID=ubuntu\n",
+        'cat /etc/nethserver/core.env' => new RuntimeException('No such file or directory'),
     ]));
 
     expect($result->isError())->toBeTrue();
@@ -84,7 +78,7 @@ test('it returns an unsupported error when neither NethSecurity nor NethServer 8
 
 test('it returns an error when os-release cannot be read', function () {
     $result = whatIsIt(fakeWhatIsItExecutor([
-        'cat /etc/os-release' => ['exit_code' => 1, 'stderr' => 'No such file or directory'],
+        'cat /etc/os-release' => new RuntimeException('No such file or directory'),
     ]));
 
     expect($result->isError())->toBeTrue();
@@ -93,7 +87,7 @@ test('it returns an error when os-release cannot be read', function () {
 
 test('it returns an error when os-release has no ID', function () {
     $result = whatIsIt(fakeWhatIsItExecutor([
-        'cat /etc/os-release' => ['stdout' => "NAME=\"Something\"\n"],
+        'cat /etc/os-release' => "NAME=\"Something\"\n",
     ]));
 
     expect($result->isError())->toBeTrue();
@@ -103,5 +97,5 @@ test('it returns an error instead of throwing when the machine is unreachable', 
     $result = whatIsIt(fakeWhatIsItExecutor(throws: new RuntimeException('Connection refused.')));
 
     expect($result->isError())->toBeTrue();
-    expect((string) $result->content())->toBe('Could not reach the machine: Connection refused.');
+    expect((string) $result->content())->toBe('Could not read /etc/os-release: Connection refused.');
 });

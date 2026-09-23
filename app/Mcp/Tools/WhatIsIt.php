@@ -27,14 +27,10 @@ class WhatIsIt extends Tool
         try {
             $osRelease = $this->executor->run($sosId, 'cat /etc/os-release');
         } catch (Throwable $exception) {
-            return Response::error("Could not reach the machine: {$exception->getMessage()}");
+            return Response::error("Could not read /etc/os-release: {$exception->getMessage()}");
         }
 
-        if ($osRelease['exit_code'] !== 0) {
-            return Response::error("Could not read /etc/os-release: {$osRelease['stderr']}");
-        }
-
-        preg_match('/^ID=(.*)$/m', $osRelease['stdout'], $matches);
+        preg_match('/^ID=(.*)$/m', $osRelease, $matches);
 
         $id = trim($matches[1] ?? '', " \t\n\r\0\x0B\"'");
 
@@ -47,12 +43,8 @@ class WhatIsIt extends Tool
         }
 
         try {
-            $coreEnv = $this->executor->run($sosId, 'cat /etc/nethserver/core.env');
-        } catch (Throwable $exception) {
-            return Response::error("Could not reach the machine: {$exception->getMessage()}");
-        }
-
-        if ($coreEnv['exit_code'] !== 0) {
+            $this->executor->run($sosId, 'cat /etc/nethserver/core.env');
+        } catch (Throwable) {
             return Response::error("Unsupported system: {$id}");
         }
 

@@ -27,13 +27,7 @@ abstract class NsApiTool extends Tool
             escapeshellarg(json_encode((object) $data, JSON_THROW_ON_ERROR)),
         );
 
-        $result = $this->executor->run($sosId, $command);
-
-        if ($result['exit_code'] !== 0) {
-            throw new RuntimeException(trim($result['stderr'] ?: $result['stdout']) ?: "ubus exited with code {$result['exit_code']}");
-        }
-
-        $decoded = json_decode($result['stdout'], true);
+        $decoded = json_decode($this->executor->run($sosId, $command), true);
 
         if (! is_array($decoded)) {
             throw new RuntimeException('ubus did not return a JSON object.');

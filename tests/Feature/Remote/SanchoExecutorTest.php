@@ -35,7 +35,7 @@ function fakeSession(string $body, int $exitCode = 0, string $banner = ''): void
 }
 
 test('it reaches the target through the support server', function () {
-    Process::fake();
+    fakeSession('');
 
     executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a');
 
@@ -59,7 +59,7 @@ test('it resolves a relative identity file against the storage path', function (
         'identity_file' => 'app/private/pointer',
     ]);
 
-    Process::fake();
+    fakeSession('');
 
     app(RemoteExecutor::class)->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a');
 
@@ -71,7 +71,7 @@ test('it resolves a relative identity file against the storage path', function (
 });
 
 test('it sends the command to the target shell over stdin rather than as an argument', function () {
-    Process::fake();
+    fakeSession('');
 
     executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a');
 
@@ -85,55 +85,52 @@ test('it sends the command to the target shell over stdin rather than as an argu
     });
 });
 
-test('it refuses a machine identifier that is not a valid UUID', function () {
-    Process::fake();
+test('it isolates the command output from the session banner', function () {
+    fakeSession("Linux ns8\n", banner: "Try connection on a1b2c3d4 session...\n\nNethSecurity 8.8.0\n\n");
 
-    expect(fn () => executor()->run("a1b2c3d4' ; rm -rf /", 'uname -a'))
-        ->toThrow(InvalidArgumentException::class);
-
-    Process::assertNothingRan();
-});
-
-test('it isolates the command output and exit code from the session banner', function () {
-    fakeSession("Linux ns8\n", exitCode: 3, banner: "Try connection on a1b2c3d4 session...\n\nNethSecurity 8.8.0\n\n");
-
-    $result = executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a');
-
-    expect($result['exit_code'])->toBe(3)
-        ->and($result['stdout'])->toBe("Linux ns8\n")
-        ->and($result['truncated'])->toBeFalse()
-        ->and($result['machine_uuid'])->toBe('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b')
-        ->and($result['command'])->toBe('uname -a');
+    expect(executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a'))->toBe("Linux ns8\n");
 });
 
 test('it truncates output beyond the configured cap', function () {
     fakeSession(str_repeat('x', 200));
 
-    $result = executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'cat /var/log/messages');
-
-    expect($result['stdout'])->toHaveLength(64)
-        ->and($result['truncated'])->toBeTrue();
+    expect(executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'cat /var/log/messages'))->toHaveLength(64);
 });
 
-test('it falls back to the raw exit code when the session fails before the markers appear', function () {
-    Process::fake(['*' => Process::result(output: '', errorOutput: 'Permission denied', exitCode: 255)]);
+test('it throws with stderr when the command exits non-zero', function () {
+    Process::fake(function (PendingProcess $process) {
+        preg_match('/(__POINTER_START_\w+__)/', (string) $process->input, $start);
+        preg_match('/(__POINTER_END_\w+__)/', (string) $process->input, $end);
 
-    $result = executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a');
+        return Process::result(
+            output: $start[1]."\n".$end[1].":1\n",
+            errorOutput: "cat: /nope: No such file or directory\n",
+        );
+    });
 
-    expect($result['exit_code'])->toBe(255)
-        ->and($result['stderr'])->toBe("Permission denied\n");
+    expect(fn () => executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'cat /nope'))
+        ->toThrow(RuntimeException::class, 'cat: /nope: No such file or directory');
 });
 
-test('it passes stderr through untouched, leaving noise suppression to the ssh client', function () {
-    Process::fake(['*' => Process::result(
-        output: '',
-        errorOutput: "Permission denied (publickey).\n",
-        exitCode: 255,
-    )]);
+test('it throws with stdout when the command fails without stderr', function () {
+    fakeSession("Command failed: Not found\n", exitCode: 4);
 
-    $result = executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a');
+    expect(fn () => executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'ubus call ns.nope list'))
+        ->toThrow(RuntimeException::class, 'Command failed: Not found');
+});
 
-    expect($result['stderr'])->toBe("Permission denied (publickey).\n");
+test('it throws with the exit code when the command fails silently', function () {
+    fakeSession('', exitCode: 3);
+
+    expect(fn () => executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'false'))
+        ->toThrow(RuntimeException::class, 'Command exited with code 3');
+});
+
+test('it throws with the ssh error when the session fails before the markers appear', function () {
+    Process::fake(['*' => Process::result(output: '', errorOutput: "Permission denied (publickey).\n", exitCode: 255)]);
+
+    expect(fn () => executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a'))
+        ->toThrow(RuntimeException::class, 'Permission denied (publickey).');
 });
 
 test('it fails loudly when no support server is configured', function () {

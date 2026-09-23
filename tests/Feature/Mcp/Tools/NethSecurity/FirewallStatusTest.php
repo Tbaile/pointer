@@ -10,7 +10,7 @@ const ZONES_COMMAND = "ubus -S call 'ns.firewall' 'list_zones' '{}'";
 const FORWARDINGS_COMMAND = "ubus -S call 'ns.firewall' 'list_forwardings' '{}'";
 
 /**
- * @param  array<string, array<string, mixed>>  $results  result overrides keyed by command
+ * @param  array<string, string|Throwable>  $results  stdout or failure keyed by command
  */
 function fakeFirewallStatusExecutor(array $results = [], ?Throwable $throws = null): RemoteExecutor
 {
@@ -23,24 +23,18 @@ function fakeFirewallStatusExecutor(array $results = [], ?Throwable $throws = nu
 
         public function __construct(private array $results, private ?Throwable $throws) {}
 
-        public function run(string $machineUuid, string $command): array
+        public function run(string $machineUuid, string $command): string
         {
             $this->calledWithMachineUuid = $machineUuid;
             $this->calledWithCommands[] = $command;
 
-            if ($this->throws) {
-                throw $this->throws;
+            $result = $this->throws ?? $this->results[$command] ?? '{}';
+
+            if ($result instanceof Throwable) {
+                throw $result;
             }
 
-            return array_merge([
-                'machine_uuid' => $machineUuid,
-                'command' => $command,
-                'exit_code' => 0,
-                'stdout' => '{}',
-                'stderr' => '',
-                'duration_ms' => 1,
-                'truncated' => false,
-            ], $this->results[$command] ?? []);
+            return $result;
         }
     };
 }
@@ -52,9 +46,9 @@ function firewallStatus(RemoteExecutor $executor): ResponseFactory
 
 test('it returns devices, zones and forwardings as structured content', function () {
     $executor = fakeFirewallStatusExecutor([
-        DEVICES_COMMAND => ['stdout' => '{"devices_by_zone":[{"name":"lan","devices":["eth0"]}]}'],
-        ZONES_COMMAND => ['stdout' => '{"ns_lan":{"name":"lan","input":"ACCEPT"}}'],
-        FORWARDINGS_COMMAND => ['stdout' => '{"ns_lan2wan":{"src":"lan","dest":"wan"}}'],
+        DEVICES_COMMAND => '{"devices_by_zone":[{"name":"lan","devices":["eth0"]}]}',
+        ZONES_COMMAND => '{"ns_lan":{"name":"lan","input":"ACCEPT"}}',
+        FORWARDINGS_COMMAND => '{"ns_lan2wan":{"src":"lan","dest":"wan"}}',
     ]);
 
     $result = firewallStatus($executor);
@@ -70,7 +64,7 @@ test('it returns devices, zones and forwardings as structured content', function
 
 test('it reports a failed call and still returns the others', function () {
     $result = firewallStatus(fakeFirewallStatusExecutor([
-        ZONES_COMMAND => ['exit_code' => 4, 'stdout' => '', 'stderr' => "Command failed: Not found\n"],
+        ZONES_COMMAND => new RuntimeException('Command failed: Not found'),
     ]));
 
     expect($result->getStructuredContent())->toBe([
@@ -82,7 +76,7 @@ test('it reports a failed call and still returns the others', function () {
 
 test('it reports a call that does not return JSON', function () {
     $result = firewallStatus(fakeFirewallStatusExecutor([
-        FORWARDINGS_COMMAND => ['stdout' => 'not json'],
+        FORWARDINGS_COMMAND => 'not json',
     ]));
 
     expect($result->getStructuredContent()['ns.firewall list_forwardings'])->toBe(['error' => 'ubus did not return a JSON object.']);

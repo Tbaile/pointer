@@ -6,6 +6,7 @@ use App\Contracts\RemoteExecutor;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use RuntimeException;
 
 /**
  * Operator runner for the support server hop.
@@ -26,16 +27,14 @@ class RunTarget extends Command
         $uuid = (string) $this->argument('uuid');
         $command = (string) $this->option('command');
 
-        $result = $executor->run($uuid, $command);
+        try {
+            $this->line($executor->run($uuid, $command));
+        } catch (RuntimeException $exception) {
+            $this->components->error($exception->getMessage());
 
-        if ($result['stdout'] !== '') {
-            $this->line($result['stdout']);
+            return self::FAILURE;
         }
 
-        if ($result['exit_code'] !== 0) {
-            $this->components->error($result['stderr']);
-        }
-
-        return $result['exit_code'] === 0 ? self::SUCCESS : self::FAILURE;
+        return self::SUCCESS;
     }
 }
