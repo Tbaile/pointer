@@ -3,7 +3,11 @@
 namespace App\Mcp\Servers;
 
 use App\Mcp\Prompts\PointerPrompt;
+use App\Mcp\Tools\NethSecurity\GetUciConfig;
+use App\Mcp\Tools\NethSecurity\GetUciSection;
 use App\Mcp\Tools\NethSecurity\ListDevices;
+use App\Mcp\Tools\NethSecurity\ListUciConfigs;
+use App\Mcp\Tools\NethSecurity\VictoriaQuery;
 use App\Mcp\Tools\SearchNethvoiceDocumentation;
 use App\Mcp\Tools\SearchNs8Documentation;
 use App\Mcp\Tools\SearchNsecDocumentation;
@@ -21,6 +25,10 @@ class PointerServer extends Server
     protected array $tools = [
         WhatIsIt::class,
         ListDevices::class,
+        VictoriaQuery::class,
+        ListUciConfigs::class,
+        GetUciConfig::class,
+        GetUciSection::class,
         SearchNsecDocumentation::class,
         SearchNs8Documentation::class,
         SearchNethvoiceDocumentation::class,

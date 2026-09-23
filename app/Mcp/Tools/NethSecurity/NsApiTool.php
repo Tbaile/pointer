@@ -22,6 +22,16 @@ abstract class NsApiTool extends Tool
     protected string $method;
 
     /**
+     * Arguments of the ubus call, validated from the request.
+     *
+     * @return array<string, mixed>
+     */
+    protected function parameters(Request $request): array
+    {
+        return [];
+    }
+
+    /**
      * Dotted paths into the response whose values are secrets, with `*` matching every item of a list.
      *
      * @var list<string>
@@ -39,9 +49,10 @@ abstract class NsApiTool extends Tool
     public function handle(Request $request): Response|ResponseFactory
     {
         $command = sprintf(
-            "ubus -S call %s %s '{}'",
+            'ubus -S call %s %s %s',
             escapeshellarg($this->path),
             escapeshellarg($this->method),
+            escapeshellarg(json_encode((object) $this->parameters($request), JSON_THROW_ON_ERROR)),
         );
 
         try {
