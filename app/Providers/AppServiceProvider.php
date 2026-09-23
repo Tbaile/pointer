@@ -5,10 +5,12 @@ namespace App\Providers;
 use App\Contracts\RemoteExecutor;
 use App\Services\Remote\SanchoExecutor;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Passport\Passport;
 use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
@@ -51,6 +53,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        Passport::authorizationView(fn (array $parameters): Response => response()->view('pages.authorize', $parameters));
     }
 
     /**

@@ -14,12 +14,16 @@
     @vite(['resources/css/app.css'])
 
     @fonts
+
+    @livewireStyles
 </head>
 
 <body class="elevation-1 min-h-screen">
     <main class="flex min-h-screen items-center justify-center px-4">
         {{ $slot }}
     </main>
+
+    @livewireScripts
 </body>
 
 </html>
