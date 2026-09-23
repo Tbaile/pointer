@@ -12,7 +12,7 @@ use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 use Throwable;
 
-#[Description('Identify which product the target machine runs and return how to investigate it.')]
+#[Description('Identify which product the target machine runs.')]
 class WhatIsIt extends Tool
 {
     public function __construct(private readonly RemoteExecutor $executor) {}
@@ -43,7 +43,7 @@ class WhatIsIt extends Tool
         }
 
         if ($id === 'nethsecurity') {
-            return Response::view('prompts.mcp.systems.'.SystemType::NethSecurity->value);
+            return Response::text(SystemType::NethSecurity->value);
         }
 
         try {
@@ -56,7 +56,7 @@ class WhatIsIt extends Tool
             return Response::error("Unsupported system: {$id}");
         }
 
-        return Response::view('prompts.mcp.systems.'.SystemType::NethServer->value);
+        return Response::text(SystemType::NethServer->value);
     }
 
     /**

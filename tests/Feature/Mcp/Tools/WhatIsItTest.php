@@ -54,7 +54,7 @@ test('it identifies NethSecurity from os-release alone', function () {
     $result = whatIsIt($executor);
 
     expect($result->isError())->toBeFalse();
-    expect((string) $result->content())->toBe(view('prompts.mcp.systems.nethsecurity')->render());
+    expect((string) $result->content())->toBe('nethsecurity');
     expect($executor->calledWithMachineUuid)->toBe('a1b2c3d4-0000-0000-0000-000000000000');
     expect($executor->calledWithCommands)->toBe(['cat /etc/os-release']);
 });
@@ -68,7 +68,7 @@ test('it identifies NethServer 8 when core.env is present', function () {
     $result = whatIsIt($executor);
 
     expect($result->isError())->toBeFalse();
-    expect((string) $result->content())->toBe(view('prompts.mcp.systems.nethserver')->render());
+    expect((string) $result->content())->toBe('nethserver');
     expect($executor->calledWithCommands)->toBe(['cat /etc/os-release', 'cat /etc/nethserver/core.env']);
 });
 
