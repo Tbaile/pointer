@@ -2,9 +2,11 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Prompts\PointerPrompt;
 use App\Mcp\Tools\SearchNethvoiceDocumentation;
 use App\Mcp\Tools\SearchNs8Documentation;
 use App\Mcp\Tools\SearchNsecDocumentation;
+use App\Mcp\Tools\WhatIsIt;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
@@ -16,6 +18,7 @@ use Laravel\Mcp\Server\Attributes\Version;
 class PointerServer extends Server
 {
     protected array $tools = [
+        WhatIsIt::class,
         SearchNsecDocumentation::class,
         SearchNs8Documentation::class,
         SearchNethvoiceDocumentation::class,
@@ -26,6 +29,6 @@ class PointerServer extends Server
     ];
 
     protected array $prompts = [
-        //
+        PointerPrompt::class,
     ];
 }
