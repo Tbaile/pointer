@@ -31,7 +31,7 @@ class WhatIsIt extends Tool
         $sosId = $request->string('sos_id');
 
         try {
-            $osRelease = $this->executor->run($sosId, 'cat /etc/os-release');
+            $osRelease = $this->executor->run($sosId, 'cat /etc/os-release')->throw()->output;
         } catch (Throwable $exception) {
             return Response::error("Could not read /etc/os-release: {$exception->getMessage()}");
         }
@@ -49,8 +49,12 @@ class WhatIsIt extends Tool
         }
 
         try {
-            $this->executor->run($sosId, 'cat /etc/nethserver/core.env');
-        } catch (Throwable) {
+            $hasCoreEnv = $this->executor->run($sosId, 'cat /etc/nethserver/core.env')->successful();
+        } catch (Throwable $exception) {
+            return Response::error("Could not read /etc/nethserver/core.env: {$exception->getMessage()}");
+        }
+
+        if (! $hasCoreEnv) {
             return Response::error("Unsupported system: {$id}");
         }
 

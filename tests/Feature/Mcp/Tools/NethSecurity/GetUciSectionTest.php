@@ -3,6 +3,7 @@
 use App\Contracts\RemoteExecutor;
 use App\Mcp\Tools\NethSecurity\GetUciSection;
 use App\Services\Privacy\SecretMasker;
+use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -16,11 +17,11 @@ function fakeGetUciSectionExecutor(string $result): RemoteExecutor
 
         public function __construct(private string $result) {}
 
-        public function run(string $machineUuid, string $command): string
+        public function run(string $machineUuid, string $command): CommandResult
         {
             $this->calledWithCommand = $command;
 
-            return $this->result;
+            return new CommandResult($this->result);
         }
     };
 }

@@ -2,11 +2,12 @@
 
 use App\Contracts\RemoteExecutor;
 use App\Mcp\Tools\WhatIsIt;
+use App\Services\Remote\CommandResult;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 
 /**
- * @param  array<string, string|Throwable>  $results  stdout or failure keyed by command
+ * @param  array<string, string|CommandResult|Throwable>  $results  stdout, result or session failure keyed by command
  */
 function fakeWhatIsItExecutor(array $results = [], ?Throwable $throws = null): RemoteExecutor
 {
@@ -19,7 +20,7 @@ function fakeWhatIsItExecutor(array $results = [], ?Throwable $throws = null): R
 
         public function __construct(private array $results, private ?Throwable $throws) {}
 
-        public function run(string $machineUuid, string $command): string
+        public function run(string $machineUuid, string $command): CommandResult
         {
             $this->calledWithMachineUuid = $machineUuid;
             $this->calledWithCommands[] = $command;
@@ -30,7 +31,7 @@ function fakeWhatIsItExecutor(array $results = [], ?Throwable $throws = null): R
                 throw $result;
             }
 
-            return $result;
+            return $result instanceof CommandResult ? $result : new CommandResult($result);
         }
     };
 }
@@ -69,16 +70,26 @@ test('it identifies NethServer 8 when core.env is present', function () {
 test('it returns an unsupported error when neither NethSecurity nor NethServer 8', function () {
     $result = whatIsIt(fakeWhatIsItExecutor([
         'cat /etc/os-release' => "ID=ubuntu\n",
-        'cat /etc/nethserver/core.env' => new RuntimeException('No such file or directory'),
+        'cat /etc/nethserver/core.env' => new CommandResult('', "cat: can't open '/etc/nethserver/core.env': No such file or directory\n", 1),
     ]));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Unsupported system: ubuntu');
 });
 
+test('it returns an error when the session breaks while looking for core.env', function () {
+    $result = whatIsIt(fakeWhatIsItExecutor([
+        'cat /etc/os-release' => "ID=\"rocky\"\n",
+        'cat /etc/nethserver/core.env' => new RuntimeException('Connection closed.'),
+    ]));
+
+    expect($result->isError())->toBeTrue();
+    expect((string) $result->content())->toBe('Could not read /etc/nethserver/core.env: Connection closed.');
+});
+
 test('it returns an error when os-release cannot be read', function () {
     $result = whatIsIt(fakeWhatIsItExecutor([
-        'cat /etc/os-release' => new RuntimeException('No such file or directory'),
+        'cat /etc/os-release' => new CommandResult('', 'No such file or directory', 1),
     ]));
 
     expect($result->isError())->toBeTrue();

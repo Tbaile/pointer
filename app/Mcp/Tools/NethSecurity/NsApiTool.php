@@ -56,7 +56,7 @@ abstract class NsApiTool extends Tool
         );
 
         try {
-            $output = $this->executor->run($request->string('sos_id'), $command);
+            $output = $this->executor->run($request->string('sos_id'), $command)->throw()->output;
         } catch (Throwable $exception) {
             return Response::error($exception->getMessage());
         }

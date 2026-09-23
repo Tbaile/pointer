@@ -88,16 +88,26 @@ test('it sends the command to the target shell over stdin rather than as an argu
 test('it isolates the command output from the session banner', function () {
     fakeSession("Linux ns8\n", banner: "Try connection on a1b2c3d4 session...\n\nNethSecurity 8.8.0\n\n");
 
-    expect(executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a'))->toBe("Linux ns8\n");
+    expect(executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'uname -a')->output)->toBe("Linux ns8\n");
 });
 
 test('it truncates output beyond the configured cap', function () {
     fakeSession(str_repeat('x', 200));
 
-    expect(executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'cat /var/log/messages'))->toHaveLength(64);
+    expect(executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'cat /var/log/messages')->output)->toHaveLength(64);
 });
 
-test('it throws with stderr when the command exits non-zero', function () {
+test('it returns the output and exit code of a command that exits non-zero', function () {
+    fakeSession("1 packets transmitted, 0 received, 100% packet loss\n", exitCode: 1);
+
+    $result = executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'ping -c 1 192.0.2.1');
+
+    expect($result->successful())->toBeFalse();
+    expect($result->exitCode)->toBe(1);
+    expect($result->output)->toBe("1 packets transmitted, 0 received, 100% packet loss\n");
+});
+
+test('it throws with stderr when a failed command is thrown', function () {
     Process::fake(function (PendingProcess $process) {
         preg_match('/(__POINTER_START_\w+__)/', (string) $process->input, $start);
         preg_match('/(__POINTER_END_\w+__)/', (string) $process->input, $end);
@@ -108,21 +118,21 @@ test('it throws with stderr when the command exits non-zero', function () {
         );
     });
 
-    expect(fn () => executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'cat /nope'))
+    expect(fn () => executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'cat /nope')->throw())
         ->toThrow(RuntimeException::class, 'cat: /nope: No such file or directory');
 });
 
-test('it throws with stdout when the command fails without stderr', function () {
+test('it throws with stdout when a failed command without stderr is thrown', function () {
     fakeSession("Command failed: Not found\n", exitCode: 4);
 
-    expect(fn () => executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'ubus call ns.nope list'))
+    expect(fn () => executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'ubus call ns.nope list')->throw())
         ->toThrow(RuntimeException::class, 'Command failed: Not found');
 });
 
-test('it throws with the exit code when the command fails silently', function () {
+test('it throws with the exit code when a silently failed command is thrown', function () {
     fakeSession('', exitCode: 3);
 
-    expect(fn () => executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'false'))
+    expect(fn () => executor()->run('0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', 'false')->throw())
         ->toThrow(RuntimeException::class, 'Command exited with code 3');
 });
 

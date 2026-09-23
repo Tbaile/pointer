@@ -22,7 +22,7 @@ final readonly class SanchoExecutor implements RemoteExecutor
         private int $maxOutputBytes,
     ) {}
 
-    public function run(string $machineUuid, string $command): string
+    public function run(string $machineUuid, string $command): CommandResult
     {
         $startMarker = '__POINTER_START_'.bin2hex(random_bytes(16)).'__';
         $endMarker = '__POINTER_END_'.bin2hex(random_bytes(16)).'__';
@@ -38,18 +38,17 @@ final readonly class SanchoExecutor implements RemoteExecutor
         $endPos = strpos($stdout, $endMarker);
 
         if ($startPos === false || $endPos === false || $endPos < $startPos) {
-            throw $this->failure($stderr, $stdout, $result->exitCode() ?? 1);
+            throw new RuntimeException(trim($stderr ?: $stdout) ?: 'Command exited with code '.($result->exitCode() ?? 1));
         }
 
         $bodyStart = strpos($stdout, "\n", $startPos) + 1;
         $body = substr($stdout, $bodyStart, $endPos - $bodyStart);
-        $exitCode = (int) substr($stdout, $endPos + strlen($endMarker) + 1);
 
-        if ($exitCode !== 0) {
-            throw $this->failure($stderr, $body, $exitCode);
-        }
-
-        return substr($body, 0, $this->maxOutputBytes);
+        return new CommandResult(
+            output: substr($body, 0, $this->maxOutputBytes),
+            errorOutput: $stderr,
+            exitCode: (int) substr($stdout, $endPos + strlen($endMarker) + 1),
+        );
     }
 
     private function buildRemoteScript(string $command, string $startMarker, string $endMarker): string
@@ -85,10 +84,5 @@ final readonly class SanchoExecutor implements RemoteExecutor
         $arguments[] = 'sancho session ssh '.escapeshellarg($machineUuid);
 
         return $arguments;
-    }
-
-    private function failure(string $stderr, string $stdout, int $exitCode): RuntimeException
-    {
-        return new RuntimeException(trim($stderr ?: $stdout) ?: "Command exited with code {$exitCode}");
     }
 }

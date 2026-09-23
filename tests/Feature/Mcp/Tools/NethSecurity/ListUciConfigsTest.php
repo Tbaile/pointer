@@ -3,6 +3,7 @@
 use App\Contracts\RemoteExecutor;
 use App\Mcp\Tools\NethSecurity\ListUciConfigs;
 use App\Services\Privacy\SecretMasker;
+use App\Services\Remote\CommandResult;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\ResponseFactory;
 
@@ -11,11 +12,11 @@ test('it lists the UCI configurations', function () {
     {
         public ?string $calledWithCommand = null;
 
-        public function run(string $machineUuid, string $command): string
+        public function run(string $machineUuid, string $command): CommandResult
         {
             $this->calledWithCommand = $command;
 
-            return '{"configs":["dhcp","firewall","network"]}';
+            return new CommandResult('{"configs":["dhcp","firewall","network"]}');
         }
     };
 

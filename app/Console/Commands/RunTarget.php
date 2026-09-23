@@ -28,7 +28,7 @@ class RunTarget extends Command
         $command = (string) $this->option('command');
 
         try {
-            $this->line($executor->run($uuid, $command));
+            $this->line($executor->run($uuid, $command)->throw()->output);
         } catch (RuntimeException $exception) {
             $this->components->error($exception->getMessage());
 

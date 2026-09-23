@@ -58,7 +58,7 @@ class VictoriaQuery extends Tool
         ]);
 
         try {
-            $output = $this->executor->run($validated['sos_id'], $this->buildCommand($validated));
+            $output = $this->executor->run($validated['sos_id'], $this->buildCommand($validated))->throw()->output;
         } catch (Throwable $exception) {
             return Response::error($exception->getMessage());
         }

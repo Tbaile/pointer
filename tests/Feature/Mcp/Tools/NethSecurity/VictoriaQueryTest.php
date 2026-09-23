@@ -2,6 +2,7 @@
 
 use App\Contracts\RemoteExecutor;
 use App\Mcp\Tools\NethSecurity\VictoriaQuery;
+use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -17,7 +18,7 @@ function fakeVictoriaQueryExecutor(string|Throwable $result): RemoteExecutor
 
         public function __construct(private string|Throwable $result) {}
 
-        public function run(string $machineUuid, string $command): string
+        public function run(string $machineUuid, string $command): CommandResult
         {
             $this->calledWithMachineUuid = $machineUuid;
             $this->calledWithCommand = $command;
@@ -26,7 +27,7 @@ function fakeVictoriaQueryExecutor(string|Throwable $result): RemoteExecutor
                 throw $this->result;
             }
 
-            return $this->result;
+            return new CommandResult($this->result);
         }
     };
 }

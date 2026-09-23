@@ -3,6 +3,7 @@
 use App\Contracts\RemoteExecutor;
 use App\Mcp\Tools\NethSecurity\ListDevices;
 use App\Services\Privacy\SecretMasker;
+use App\Services\Remote\CommandResult;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
@@ -17,7 +18,7 @@ function fakeListDevicesExecutor(string|Throwable $result): RemoteExecutor
 
         public function __construct(private string|Throwable $result) {}
 
-        public function run(string $machineUuid, string $command): string
+        public function run(string $machineUuid, string $command): CommandResult
         {
             $this->calledWithMachineUuid = $machineUuid;
             $this->calledWithCommand = $command;
@@ -26,7 +27,7 @@ function fakeListDevicesExecutor(string|Throwable $result): RemoteExecutor
                 throw $this->result;
             }
 
-            return $this->result;
+            return new CommandResult($this->result);
         }
     };
 }
