@@ -14,6 +14,7 @@ use App\Mcp\Tools\NethSecurity\Traceroute;
 use App\Mcp\Tools\NethSecurity\VictoriaQuery;
 use App\Mcp\Tools\RecordDiagnosis;
 use App\Mcp\Tools\RequestTool;
+use App\Mcp\Tools\RunCommand;
 use App\Mcp\Tools\SearchDiagnoses;
 use App\Mcp\Tools\SearchNethvoiceDocumentation;
 use App\Mcp\Tools\SearchNs8Documentation;
@@ -34,6 +35,7 @@ use Laravel\Mcp\Server\Attributes\Version;
     Search the documentation of the product the machine runs: `search-nsec-documentation` for `nethsecurity`, `search-ns8-documentation` for `nethserver`, plus `search-nethvoice-documentation` for NethVoice and telephony problems.
     Search past diagnoses with `search-diagnoses` before investigating, and record the outcome with `record-diagnosis` once the investigation ends.
     When a tool you need is missing, search `search-tool-requests` and either upvote the matching request with `upvote-tool-request` or create one with `request-tool`.
+    Only when no other tool can answer, use `run-command` with the tool request for the missing capability; keep the command short and readable.
     INSTRUCTIONS)]
 class PointerServer extends Server
 {
@@ -56,6 +58,7 @@ class PointerServer extends Server
         SearchToolRequests::class,
         RequestTool::class,
         UpvoteToolRequest::class,
+        RunCommand::class,
     ];
 
     protected array $prompts = [

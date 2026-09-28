@@ -36,7 +36,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
     DESCRIPTION)]
 class RecordDiagnosis extends Tool
 {
-    private const string TAG_PATTERN = '/^[a-z0-9]+(-[a-z0-9]+)*$/';
+    public const string TAG_PATTERN = '/^[a-z0-9]+(-[a-z0-9]+)*$/';
 
     /**
      * Handle the tool request.
