@@ -8,6 +8,6 @@ Route::view('/login', 'pages.login')
 
 Route::middleware('auth')->group(function () {
     Route::livewire('/', 'pages::dashboard')->name('dashboard');
-    Route::livewire('/diagnoses', 'pages::diagnoses.index')->name('diagnoses.index');
-    Route::livewire('/diagnoses/{diagnosis}', 'pages::diagnoses.edit')->name('diagnoses.edit');
+    Route::livewire('/playbooks', 'pages::playbooks.index')->name('playbooks.index');
+    Route::livewire('/playbooks/{playbook}', 'pages::playbooks.show')->name('playbooks.show');
 });

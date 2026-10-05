@@ -7,6 +7,8 @@
     --surface-background-code: var(--color-gray-50);
     --surface-button-danger-active: var(--color-rose-700);
     --surface-button-danger-hover: var(--color-rose-800);
+    --surface-inline-notification-success: var(--color-green-100);
+    --surface-inline-notification-error: var(--color-rose-100);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -15,6 +17,8 @@
         --surface-background-code: var(--color-gray-900);
         --surface-button-danger-active: var(--color-rose-600);
         --surface-button-danger-hover: var(--color-rose-500);
+        --surface-inline-notification-success: var(--color-green-900);
+        --surface-inline-notification-error: var(--color-rose-900);
     }
 }
 
@@ -23,6 +27,8 @@
     --surface-bg-background-code: var(--surface-background-code);
     --surface-bg-button-danger-active: var(--surface-button-danger-active);
     --surface-bg-button-danger-hover: var(--surface-button-danger-hover);
+    --surface-bg-inline-notification-success: var(--surface-inline-notification-success);
+    --surface-bg-inline-notification-error: var(--surface-inline-notification-error);
 }
 
 @utility surface-* {

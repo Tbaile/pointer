@@ -1,6 +1,8 @@
 <?php
 
-use App\Models\Diagnosis;
+use App\Enums\ProposalStatus;
+use App\Models\Playbook;
+use App\Models\PlaybookProposal;
 use App\Models\User;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -15,9 +17,15 @@ new #[Layout('components.layouts.app')] #[Title('Dashboard')] class extends Comp
     }
 
     #[Computed]
-    public function diagnosesToCheck(): int
+    public function unverifiedPlaybooks(): int
     {
-        return Diagnosis::whereNull('verdict')->count();
+        return Playbook::whereNull('verdict')->count();
+    }
+
+    #[Computed]
+    public function pendingProposals(): int
+    {
+        return PlaybookProposal::query()->where('status', ProposalStatus::Pending)->count();
     }
 }; ?>
 
@@ -27,18 +35,20 @@ new #[Layout('components.layouts.app')] #[Title('Dashboard')] class extends Comp
         <p class="text-secondary-neutral">Welcome back, {{ $this->user->name }}.</p>
     </header>
 
-    <div class="grid grid-cols-2">
-        <x-card :title="trans_choice(
-            '{0} No diagnoses to check|{1} :value diagnose to check|[2,*] :value diagnoses to check',
-            $this->diagnosesToCheck,
-            ['value' => $this->diagnosesToCheck],
-        )">
-            <x-button
-                :href="route('diagnoses.index')"
-                class="mt-4"
-            >
-                {{ __('View diagnoses') }}
-            </x-button>
-        </x-card>
-    </div>
+    <x-card :title="__('Playbooks')">
+        <ul class="mt-4 space-y-2">
+            <li>
+                <a
+                    href="{{ route('playbooks.index', ['verdict' => 'unverified']) }}"
+                    class="text-primary-neutral hover:underline"
+                >{{ trans_choice('{0} No unverified playbooks|{1} :count unverified playbook|[2,*] :count unverified playbooks', $this->unverifiedPlaybooks) }}</a>
+            </li>
+            <li>
+                <a
+                    href="{{ route('playbooks.index', ['pending' => 1]) }}"
+                    class="text-primary-neutral hover:underline"
+                >{{ trans_choice('{0} No pending proposals|{1} :count pending proposal|[2,*] :count pending proposals', $this->pendingProposals) }}</a>
+            </li>
+        </ul>
+    </x-card>
 </div>

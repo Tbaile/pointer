@@ -3,7 +3,7 @@
 namespace App\Mcp\Tools;
 
 use App\Enums\SystemType;
-use App\Models\DiagnosisTag;
+use App\Models\Tag;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\JsonSchema\Types\Type;
@@ -17,11 +17,11 @@ use Laravel\Mcp\Server\Tool;
 use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
-#[Title('List Diagnosis Tags')]
+#[Title('List Playbook Tags')]
 #[IsReadOnly]
 #[IsOpenWorld(false)]
-#[Description('List the tags used so far in the diagnosis history, most used first. Use them to search past diagnoses and reuse them when recording a new one.')]
-class ListDiagnosisTags extends Tool
+#[Description('List the tags used so far on playbooks, most used first. Use them to search playbooks and reuse them when recording a new one.')]
+class ListPlaybookTags extends Tool
 {
     /**
      * Handle the tool request.
@@ -34,21 +34,20 @@ class ListDiagnosisTags extends Tool
 
         $systemType = $validated['system_type'] ?? null;
 
-        $tags = DiagnosisTag::query()
-            ->select('tag')
-            ->selectRaw('count(*) as uses')
-            ->when($systemType, fn (Builder $query) => $query
-                ->whereHas('diagnosis', fn (Builder $diagnosisQuery) => $diagnosisQuery->where('system_type', $systemType)))
-            ->groupBy('tag')
+        $playbooksOfSystem = fn (Builder $playbookQuery) => $playbookQuery
+            ->when($systemType, fn (Builder $query) => $query->where('system_type', $systemType));
+
+        $tags = Tag::query()
+            ->whereHas('playbooks', $playbooksOfSystem)
+            ->withCount(['playbooks as uses' => $playbooksOfSystem])
             ->orderByDesc('uses')
-            ->orderBy('tag')
-            ->toBase()
+            ->orderBy('name')
             ->get();
 
         return Response::structured([
-            'tags' => $tags->map(fn (object $row): array => [
-                'tag' => $row->tag,
-                'uses' => (int) $row->uses,
+            'tags' => $tags->map(fn (Tag $tag): array => [
+                'tag' => $tag->name,
+                'uses' => (int) $tag->getAttribute('uses'),
             ])->all(),
         ]);
     }
@@ -63,7 +62,7 @@ class ListDiagnosisTags extends Tool
         return [
             'system_type' => $schema->string()
                 ->enum(array_column(SystemType::cases(), 'value'))
-                ->description('Only list tags of diagnoses on this product.'),
+                ->description('Only list tags of playbooks for this product.'),
         ];
     }
 }

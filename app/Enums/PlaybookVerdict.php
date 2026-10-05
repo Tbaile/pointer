@@ -3,9 +3,9 @@
 namespace App\Enums;
 
 /**
- * A technician's judgement on whether a diagnosis was correct.
+ * A technician's judgement on whether a playbook is correct.
  */
-enum DiagnosisVerdict: string
+enum PlaybookVerdict: string
 {
     case Confirmed = 'confirmed';
 
