@@ -8,8 +8,10 @@ use App\Mcp\Tools\NethSecurity\GetUciConfig;
 use App\Mcp\Tools\NethSecurity\GetUciSection;
 use App\Mcp\Tools\NethSecurity\ListDevices;
 use App\Mcp\Tools\NethSecurity\ListUciConfigs;
+use App\Mcp\Tools\NethSecurity\NftList;
 use App\Mcp\Tools\NethSecurity\Ping;
 use App\Mcp\Tools\NethSecurity\ReadSystemLog;
+use App\Mcp\Tools\NethSecurity\ServiceStatus;
 use App\Mcp\Tools\NethSecurity\TcpProbe;
 use App\Mcp\Tools\NethSecurity\Traceroute;
 use App\Mcp\Tools\NethSecurity\VictoriaQuery;
@@ -54,6 +56,8 @@ class PointerServer extends Server
         Traceroute::class,
         TcpProbe::class,
         ReadSystemLog::class,
+        ServiceStatus::class,
+        NftList::class,
         ReadLogs::class,
         SearchNsecDocumentation::class,
         SearchNs8Documentation::class,
