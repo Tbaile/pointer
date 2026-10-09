@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Contracts\RemoteExecutor;
 use App\Services\Remote\SanchoExecutor;
 use Carbon\CarbonImmutable;
+use Illuminate\Foundation\DevCommands;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -53,6 +54,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        // PHP_CLI_SERVER_WORKERS is ignored without --no-reload
+        DevCommands::artisan('serve --no-reload', 'server');
 
         Passport::authorizationView(fn (array $parameters): Response => response()->view('pages.authorize', $parameters));
     }
