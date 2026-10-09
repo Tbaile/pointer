@@ -42,7 +42,7 @@ return [
 
     'execution' => [
 
-        'timeout' => (int) env('POINTER_COMMAND_TIMEOUT', 30),
+        'timeout' => (int) env('POINTER_COMMAND_TIMEOUT', 120),
 
         'max_output_bytes' => (int) env('POINTER_MAX_OUTPUT_BYTES', 65536),
 
