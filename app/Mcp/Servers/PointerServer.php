@@ -6,6 +6,7 @@ use App\Mcp\Prompts\PointerPrompt;
 use App\Mcp\Tools\ListPlaybookTags;
 use App\Mcp\Tools\NethSecurity\GetUciConfig;
 use App\Mcp\Tools\NethSecurity\GetUciSection;
+use App\Mcp\Tools\NethSecurity\HaStatus;
 use App\Mcp\Tools\NethSecurity\ListDevices;
 use App\Mcp\Tools\NethSecurity\ListUciConfigs;
 use App\Mcp\Tools\NethSecurity\NftList;
@@ -58,6 +59,7 @@ class PointerServer extends Server
         ReadSystemLog::class,
         ServiceStatus::class,
         NftList::class,
+        HaStatus::class,
         ReadLogs::class,
         SearchNsecDocumentation::class,
         SearchNs8Documentation::class,
