@@ -3,6 +3,7 @@
 namespace App\Mcp\Servers;
 
 use App\Mcp\Prompts\PointerPrompt;
+use App\Mcp\Tools\DiskUsage;
 use App\Mcp\Tools\ListPlaybookTags;
 use App\Mcp\Tools\NethSecurity\ConntrackList;
 use App\Mcp\Tools\NethSecurity\GetUciConfig;
@@ -18,6 +19,7 @@ use App\Mcp\Tools\NethSecurity\TcpProbe;
 use App\Mcp\Tools\NethSecurity\Traceroute;
 use App\Mcp\Tools\NethSecurity\VictoriaQuery;
 use App\Mcp\Tools\NethServer\ReadLogs;
+use App\Mcp\Tools\ProcessList;
 use App\Mcp\Tools\ProposePlaybookChange;
 use App\Mcp\Tools\RecordPlaybook;
 use App\Mcp\Tools\RequestTool;
@@ -62,6 +64,8 @@ class PointerServer extends Server
         NftList::class,
         ConntrackList::class,
         HaStatus::class,
+        ProcessList::class,
+        DiskUsage::class,
         ReadLogs::class,
         SearchNsecDocumentation::class,
         SearchNs8Documentation::class,
