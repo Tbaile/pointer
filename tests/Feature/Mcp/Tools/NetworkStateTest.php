@@ -1,7 +1,7 @@
 <?php
 
 use App\Contracts\RemoteExecutor;
-use App\Mcp\Tools\NethServer\NetworkState;
+use App\Mcp\Tools\NetworkState;
 use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
@@ -60,22 +60,32 @@ test('it runs the command of each object', function (array $arguments, string $c
 })->with([
     'ipv4 routes' => [['object' => 'routes'], 'ip route 2>&1'],
     'ipv6 routes' => [['object' => 'routes', 'ipv6' => true], 'ip -6 route 2>&1'],
-    'sockets' => [['object' => 'sockets'], 'ss -tulpn 2>&1'],
+    'neighbours' => [['object' => 'neighbours'], 'ip neigh 2>&1'],
+    'neighbours of a device' => [['object' => 'neighbours', 'device' => 'eth1'], "ip neigh show dev 'eth1' 2>&1"],
+    'sockets' => [['object' => 'sockets'], 'if command -v ss >/dev/null; then ss -tulpn; else netstat -tulpn; fi 2>&1'],
 ]);
 
-test('it rejects an unknown object', function () {
+test('it rejects a device that is not a plain interface name', function () {
     $executor = fakeNetworkStateExecutor(new CommandResult(''));
 
-    expect(fn () => networkState($executor, ['object' => 'neighbours']))
+    expect(fn () => networkState($executor, ['object' => 'neighbours', 'device' => 'eth1; reboot']))
         ->toThrow(ValidationException::class);
     expect($executor->calledWithCommand)->toBeNull();
 });
 
-test('it reports a failed command as an error', function () {
-    $result = networkState(fakeNetworkStateExecutor(new CommandResult("bash: ss: command not found\n", '', 127)), ['object' => 'sockets']);
+test('it rejects an unknown object', function () {
+    $executor = fakeNetworkStateExecutor(new CommandResult(''));
+
+    expect(fn () => networkState($executor, ['object' => 'links']))
+        ->toThrow(ValidationException::class);
+    expect($executor->calledWithCommand)->toBeNull();
+});
+
+test('it reports an unknown device as an error', function () {
+    $result = networkState(fakeNetworkStateExecutor(new CommandResult("Cannot find device \"nosuch\"\n", '', 1)), ['object' => 'neighbours', 'device' => 'nosuch']);
 
     expect($result->isError())->toBeTrue();
-    expect((string) $result->content())->toBe('bash: ss: command not found');
+    expect((string) $result->content())->toBe('Cannot find device "nosuch"');
 });
 
 test('it reports a failed call as an error', function () {

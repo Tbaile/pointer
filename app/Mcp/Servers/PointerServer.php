@@ -4,13 +4,16 @@ namespace App\Mcp\Servers;
 
 use App\Mcp\Prompts\PointerPrompt;
 use App\Mcp\Tools\DiskUsage;
+use App\Mcp\Tools\KernelCounters;
 use App\Mcp\Tools\ListPlaybookTags;
+use App\Mcp\Tools\NethSecurity\ArpProbe;
 use App\Mcp\Tools\NethSecurity\ConntrackList;
 use App\Mcp\Tools\NethSecurity\GetUciConfig;
 use App\Mcp\Tools\NethSecurity\GetUciSection;
 use App\Mcp\Tools\NethSecurity\HaStatus;
 use App\Mcp\Tools\NethSecurity\ListDevices;
 use App\Mcp\Tools\NethSecurity\ListUciConfigs;
+use App\Mcp\Tools\NethSecurity\Mwan3Status;
 use App\Mcp\Tools\NethSecurity\NftList;
 use App\Mcp\Tools\NethSecurity\Ping;
 use App\Mcp\Tools\NethSecurity\ReadSystemLog;
@@ -18,14 +21,15 @@ use App\Mcp\Tools\NethSecurity\ServiceStatus;
 use App\Mcp\Tools\NethSecurity\TcpProbe;
 use App\Mcp\Tools\NethSecurity\Traceroute;
 use App\Mcp\Tools\NethSecurity\VictoriaQuery;
+use App\Mcp\Tools\NethSecurity\WireguardStatus;
 use App\Mcp\Tools\NethServer\FirewallStatus;
 use App\Mcp\Tools\NethServer\ListModules;
 use App\Mcp\Tools\NethServer\ModuleContainers;
 use App\Mcp\Tools\NethServer\ModuleEnvironment;
-use App\Mcp\Tools\NethServer\NetworkState;
 use App\Mcp\Tools\NethServer\ReadLogs;
 use App\Mcp\Tools\NethServer\StartNodeSupport;
 use App\Mcp\Tools\NethServer\StopNodeSupport;
+use App\Mcp\Tools\NetworkState;
 use App\Mcp\Tools\ProcessList;
 use App\Mcp\Tools\ProposePlaybookChange;
 use App\Mcp\Tools\RecordPlaybook;
@@ -71,8 +75,12 @@ class PointerServer extends Server
         NftList::class,
         ConntrackList::class,
         HaStatus::class,
+        Mwan3Status::class,
+        WireguardStatus::class,
+        ArpProbe::class,
         ProcessList::class,
         DiskUsage::class,
+        KernelCounters::class,
         ReadLogs::class,
         ListModules::class,
         ModuleContainers::class,

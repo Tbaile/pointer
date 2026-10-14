@@ -70,6 +70,14 @@ test('it sends the requested count from the given source address', function () {
     expect($executor->calledWithCommand)->toBe("ping -n -c 5 -W 2 -I '10.0.1.1' 'one.one.one.one' 2>&1");
 });
 
+test('it sends a payload of the given size with the Don\'t Fragment bit through an mwan3 interface', function () {
+    $executor = fakePingExecutor(new CommandResult(PING_REPLY));
+
+    ping($executor, ['target' => '10.20.0.1', 'interface' => 'wan', 'size' => 1472, 'dont_fragment' => true, 'count' => 2]);
+
+    expect($executor->calledWithCommand)->toBe("mwan3 use 'wan' ping -n -c 2 -W 2 -s 1472 -M do '10.20.0.1' 2>&1");
+});
+
 test('it reports an unanswered ping as unreachable rather than as an error', function () {
     $output = "PING 192.0.2.1 (192.0.2.1) 56(84) bytes of data.\n\n--- 192.0.2.1 ping statistics ---\n1 packets transmitted, 0 received, 100% packet loss, time 0ms\n\n";
 
@@ -137,4 +145,6 @@ test('it rejects invalid arguments without reaching the machine', function (arra
     'interface together with source' => [['target' => '1.1.1.1', 'interface' => 'RED', 'source_ip' => '10.0.1.1']],
     'count above the cap' => [['target' => '1.1.1.1', 'count' => 6]],
     'count below one' => [['target' => '1.1.1.1', 'count' => 0]],
+    'size above the IPv4 maximum' => [['target' => '1.1.1.1', 'size' => 65508]],
+    'size that is not a number' => [['target' => '1.1.1.1', 'size' => '1472 -f']],
 ]);
