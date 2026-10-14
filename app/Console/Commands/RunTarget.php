@@ -6,6 +6,7 @@ use App\Contracts\RemoteExecutor;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use RuntimeException;
 
 /**
@@ -24,8 +25,8 @@ class RunTarget extends Command
 {
     public function handle(RemoteExecutor $executor): int
     {
-        $uuid = (string) $this->argument('uuid');
-        $command = (string) $this->option('command');
+        $uuid = Arr::string($this->arguments(), 'uuid');
+        $command = Arr::string($this->options(), 'command');
 
         try {
             $this->line($executor->run($uuid, $command)->throw()->output);

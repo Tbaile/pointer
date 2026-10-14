@@ -6,6 +6,7 @@ use App\Contracts\KnowledgeRetriever;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use Throwable;
 
 #[Signature('kapa:query:nsec
@@ -15,7 +16,7 @@ class QueryNsecKapa extends Command
 {
     public function handle(KnowledgeRetriever $retriever): int
     {
-        $query = (string) $this->argument('query');
+        $query = Arr::string($this->arguments(), 'query');
 
         try {
             $chunks = $retriever->retrieve($query);
