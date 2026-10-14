@@ -4,6 +4,7 @@ namespace App\Mcp\Servers;
 
 use App\Mcp\Prompts\PointerPrompt;
 use App\Mcp\Tools\ListPlaybookTags;
+use App\Mcp\Tools\NethSecurity\ConntrackList;
 use App\Mcp\Tools\NethSecurity\GetUciConfig;
 use App\Mcp\Tools\NethSecurity\GetUciSection;
 use App\Mcp\Tools\NethSecurity\HaStatus;
@@ -59,6 +60,7 @@ class PointerServer extends Server
         ReadSystemLog::class,
         ServiceStatus::class,
         NftList::class,
+        ConntrackList::class,
         HaStatus::class,
         ReadLogs::class,
         SearchNsecDocumentation::class,
