@@ -42,6 +42,16 @@ class McpSetup extends Page
                                 Text::make(__('Run this in a terminal, then run /mcp inside Claude Code and select pointer to sign in.')),
                                 $this->snippet('claudeCode', "claude mcp add --transport http --scope user pointer {$url}", 'shell'),
                             ]),
+                        Tab::make('Claude Desktop')
+                            ->schema([
+                                Text::make(__('In Claude, go to Customize > Connectors, click Add custom connector, paste this URL and click Add. If asked for an OAuth client, choose Register automatically. Then click Connect to sign in. On Team and Enterprise plans an Owner adds the connector from Organization settings > Connectors, and members only click Connect.')),
+                                $this->snippet('claudeDesktop', $url, 'text'),
+                                Actions::make([
+                                    Action::make('openClaudeConnectors')
+                                        ->label(__('Open Claude connectors'))
+                                        ->url('https://claude.ai/customize/connectors', shouldOpenInNewTab: true),
+                                ]),
+                            ]),
                         Tab::make('Codex CLI')
                             ->schema([
                                 Text::make(__('Add the server, then sign in.')),

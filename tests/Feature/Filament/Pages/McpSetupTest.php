@@ -12,6 +12,7 @@ test('the page shows the setup for every client', function () {
     actingAs(User::factory()->create())
         ->get('/admin/mcp-setup')
         ->assertSee('claude mcp add --transport http --scope user pointer https://pointer.example.com/mcp/pointer')
+        ->assertSee('https://claude.ai/customize/connectors')
         ->assertSee('codex mcp add pointer --url https://pointer.example.com/mcp/pointer')
         ->assertSee('[mcp_servers.pointer]')
         ->assertSee('cursor://anysphere.cursor-deeplink/mcp/install?name=pointer&config=eyJ1cmwiOiJodHRwczovL3BvaW50ZXIuZXhhbXBsZS5jb20vbWNwL3BvaW50ZXIifQ%3D%3D')
