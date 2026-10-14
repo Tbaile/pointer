@@ -7,7 +7,8 @@
     "mcp": true,
     "nightwatch": false,
     "packages": [
-        "livewire/blaze"
+        "livewire/blaze",
+        "filament/filament"
     ],
     "sail": false,
     "skills": [
@@ -19,6 +20,7 @@
         "passport-development",
         "livewire-development",
         "tailwindcss-development",
+        "filament-development",
         "blaze-optimize"
     ]
 }
