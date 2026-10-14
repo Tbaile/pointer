@@ -59,7 +59,7 @@ class ProposalsRelationManager extends RelationManager
             ])
             ->filters([
                 SelectFilter::make('status')
-                    ->options(array_column(ProposalStatus::cases(), 'value', 'value'))
+                    ->options(ProposalStatus::class)
                     ->default(ProposalStatus::Pending->value),
             ])
             ->recordActions([

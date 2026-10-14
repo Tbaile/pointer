@@ -1,6 +1,6 @@
 <x-layouts.guest>
     <a
-        href="{{ url('/admin') }}"
+        href="{{ filament()->getUrl() }}"
         class="bg-primary-active hover:bg-primary-hover focus:ring-primary absolute right-6 top-6 rounded-lg px-4 py-2 font-medium text-white focus:outline-none focus:ring-2"
     >{{ auth()->check() ? __('Dashboard') : __('Login') }}</a>
 

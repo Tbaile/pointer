@@ -28,12 +28,12 @@ class ViewPlaybook extends ViewRecord
                 ->label(__('Set verdict'))
                 ->color('gray')
                 ->fillForm(fn (Playbook $record): array => [
-                    'verdict' => $record->verdict?->value,
+                    'verdict' => $record->verdict,
                     'verdict_note' => $record->verdict_note,
                 ])
                 ->schema([
                     Select::make('verdict')
-                        ->options(array_column(PlaybookVerdict::cases(), 'value', 'value'))
+                        ->options(PlaybookVerdict::class)
                         ->placeholder(__('Unverified')),
                     Textarea::make('verdict_note')
                         ->label(__('Verdict note'))
@@ -43,7 +43,7 @@ class ViewPlaybook extends ViewRecord
                     /** @var User $reviewer */
                     $reviewer = auth()->user();
 
-                    $setPlaybookVerdict->handle($record, $reviewer, PlaybookVerdict::tryFrom($data['verdict'] ?? ''), $data['verdict_note'] ?? null);
+                    $setPlaybookVerdict->handle($record, $reviewer, $data['verdict'], $data['verdict_note'] ?? null);
                 }),
             EditAction::make(),
         ];

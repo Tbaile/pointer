@@ -8,6 +8,7 @@
     --text-tertiary-neutral: var(--color-gray-600);
     --text-placeholder: var(--color-gray-400);
     --text-danger: var(--color-rose-700);
+    --text-white: var(--color-white);
     --text-inline-notification-success-description: var(--color-green-700);
     --text-inline-notification-error-description: var(--color-rose-700);
 }
@@ -19,6 +20,7 @@
         --text-tertiary-neutral: var(--color-gray-300);
         --text-placeholder: var(--color-gray-500);
         --text-danger: var(--color-rose-500);
+        --text-white: var(--color-white);
         --text-inline-notification-success-description: var(--color-green-200);
         --text-inline-notification-error-description: var(--color-rose-200);
     }
@@ -30,6 +32,7 @@
     --text-color-tertiary-neutral: var(--text-tertiary-neutral);
     --text-color-placeholder: var(--text-placeholder);
     --text-color-danger: var(--text-danger);
+    --text-color-white: var(--text-white);
     --text-color-inline-notification-success-description: var(--text-inline-notification-success-description);
     --text-color-inline-notification-error-description: var(--text-inline-notification-error-description);
 }

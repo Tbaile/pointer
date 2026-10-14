@@ -14,7 +14,7 @@ class PlaybookStats extends StatsOverviewWidget
     protected function getStats(): array
     {
         return [
-            Stat::make(__('Unverified playbooks'), Playbook::whereNull('verdict')->count())
+            Stat::make(__('Unverified playbooks'), Playbook::query()->whereNull('verdict')->count())
                 ->url(PlaybookResource::getUrl('index', ['filters' => ['verdict' => ['value' => 'unverified']]])),
             Stat::make(__('Pending proposals'), PlaybookProposal::query()->where('status', ProposalStatus::Pending)->count())
                 ->url(PlaybookResource::getUrl('index', ['filters' => ['pending' => ['isActive' => true]]])),

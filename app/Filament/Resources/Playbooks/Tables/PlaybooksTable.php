@@ -48,9 +48,9 @@ class PlaybooksTable
             ->filters([
                 SelectFilter::make('system_type')
                     ->label(__('Product'))
-                    ->options(array_column(SystemType::cases(), 'value', 'value')),
+                    ->options(SystemType::class),
                 SelectFilter::make('verdict')
-                    ->options(['unverified' => __('Unverified')] + array_column(PlaybookVerdict::cases(), 'value', 'value'))
+                    ->options(['unverified' => __('Unverified')] + collect(PlaybookVerdict::cases())->mapWithKeys(fn (PlaybookVerdict $verdict): array => [$verdict->value => $verdict->getLabel()])->all())
                     ->query(fn (Builder $query, array $data) => match ($data['value'] ?? null) {
                         null, '' => $query,
                         'unverified' => $query->whereNull('verdict'),
