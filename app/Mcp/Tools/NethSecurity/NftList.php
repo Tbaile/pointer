@@ -18,10 +18,11 @@ use Throwable;
 #[IsReadOnly]
 #[IsOpenWorld(false)]
 #[Description(<<<'DESCRIPTION'
-    List the nftables ruleset of a NethSecurity firewall (`nft list`), with the rule and named counters.
-    Only works on `nethsecurity` machines.
+    List the nftables ruleset of a NethSecurity firewall or a NethServer 8 node (`nft list`), with the rule and named counters.
+    Works on `nethsecurity` and `nethserver` machines.
 
     - `object` `ruleset` (default): every table. `tables`: only the table names, e.g. `table inet fw4`, `table inet banIP`. `counters`: the named counters of every table.
+    - On `nethserver`, `inet` `firewalld` holds the firewalld rules (read them with `firewall-status`), and `ip` `crowdsec` / `ip6` `crowdsec6` the CrowdSec blocklists.
     - `table`, `chain`, `set`: one object, by `family`, `table` and, for `chain` and `set`, `name`. E.g. `inet` `banIP` `_inbound` for Threat Shield IP's inbound drops.
     - Rules read like `ip saddr @blocklist.v4 counter packets 12 bytes 720 drop`: the counter tells how many packets the rule matched since it was loaded.
     - Set elements are left out: sets can hold hundreds of thousands of them. Pass `elements` with `object` `set` to read them.

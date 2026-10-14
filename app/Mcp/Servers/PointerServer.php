@@ -18,7 +18,14 @@ use App\Mcp\Tools\NethSecurity\ServiceStatus;
 use App\Mcp\Tools\NethSecurity\TcpProbe;
 use App\Mcp\Tools\NethSecurity\Traceroute;
 use App\Mcp\Tools\NethSecurity\VictoriaQuery;
+use App\Mcp\Tools\NethServer\FirewallStatus;
+use App\Mcp\Tools\NethServer\ListModules;
+use App\Mcp\Tools\NethServer\ModuleContainers;
+use App\Mcp\Tools\NethServer\ModuleEnvironment;
+use App\Mcp\Tools\NethServer\NetworkState;
 use App\Mcp\Tools\NethServer\ReadLogs;
+use App\Mcp\Tools\NethServer\StartNodeSupport;
+use App\Mcp\Tools\NethServer\StopNodeSupport;
 use App\Mcp\Tools\ProcessList;
 use App\Mcp\Tools\ProposePlaybookChange;
 use App\Mcp\Tools\RecordPlaybook;
@@ -67,6 +74,13 @@ class PointerServer extends Server
         ProcessList::class,
         DiskUsage::class,
         ReadLogs::class,
+        ListModules::class,
+        ModuleContainers::class,
+        ModuleEnvironment::class,
+        FirewallStatus::class,
+        NetworkState::class,
+        StartNodeSupport::class,
+        StopNodeSupport::class,
         SearchNsecDocumentation::class,
         SearchNs8Documentation::class,
         SearchNethvoiceDocumentation::class,
