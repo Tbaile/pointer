@@ -9,7 +9,7 @@ use Livewire\Livewire;
 use function Pest\Laravel\actingAs;
 
 test('editing saves the playbook and confirms it', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $playbook = Playbook::factory()->withTags(['dns'])->create();
 
     actingAs($user);
@@ -35,7 +35,7 @@ test('editing saves the playbook and confirms it', function () {
 });
 
 test('editing rejects invalid tags', function (array $tags, string $message) {
-    actingAs(User::factory()->create());
+    actingAs(User::factory()->admin()->create());
 
     Livewire::test(EditPlaybook::class, ['record' => Playbook::factory()->withTags(['dns'])->create()->id])
         ->fillForm(['tags' => $tags])

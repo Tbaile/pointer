@@ -1,6 +1,10 @@
 <?php
 
+use Filament\Notifications\Livewire\Notifications;
+use Filament\Notifications\Notification;
+use Filament\Notifications\NotificationMailbox;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /*
@@ -47,4 +51,24 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Pull the temporary password out of the notification shown to the admin for the given user.
+ */
+function shownTemporaryPassword(string $name): string
+{
+    app(NotificationMailbox::class)->flush();
+
+    $notifications = new Notifications;
+    $notifications->mount();
+    $notifications->pullNotificationsFromSession();
+
+    $notification = $notifications->notifications->first(
+        fn (Notification $notification): bool => $notification->getTitle() === "Temporary password for {$name}",
+    );
+
+    expect($notification)->not->toBeNull();
+
+    return Str::afterLast((string) $notification->getBody(), ': ');
 }

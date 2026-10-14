@@ -24,6 +24,11 @@ class PlaybookResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'title';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->is_admin;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return PlaybookForm::configure($schema);

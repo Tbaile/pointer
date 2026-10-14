@@ -21,7 +21,7 @@ test('authenticated users can view the panel dashboard', function () {
 });
 
 test('the stats count unverified playbooks and pending proposals', function () {
-    actingAs(User::factory()->create());
+    actingAs(User::factory()->admin()->create());
     Playbook::factory()->count(2)->create();
     Playbook::factory()->verdict(PlaybookVerdict::Confirmed)->create();
     PlaybookProposal::factory()->for(Playbook::factory()->verdict(PlaybookVerdict::Confirmed))->create();
@@ -29,4 +29,10 @@ test('the stats count unverified playbooks and pending proposals', function () {
     Livewire::test(PlaybookStats::class)
         ->assertSeeInOrder(['Unverified playbooks', '2'])
         ->assertSeeInOrder(['Pending proposals', '1']);
+});
+
+test('non-admins do not see the stats on the dashboard', function () {
+    actingAs(User::factory()->create())
+        ->get('/admin')
+        ->assertDontSee('Unverified playbooks');
 });

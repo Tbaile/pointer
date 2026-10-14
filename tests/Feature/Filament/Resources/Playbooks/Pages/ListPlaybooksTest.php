@@ -12,7 +12,13 @@ use Livewire\Livewire;
 use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
-    actingAs(User::factory()->create());
+    actingAs(User::factory()->admin()->create());
+});
+
+test('non-admins are forbidden from the playbooks list', function () {
+    actingAs(User::factory()->create())
+        ->get('/admin/playbooks')
+        ->assertForbidden();
 });
 
 test('the list shows playbooks with their pending proposal count', function () {

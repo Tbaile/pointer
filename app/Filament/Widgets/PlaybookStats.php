@@ -11,6 +11,11 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class PlaybookStats extends StatsOverviewWidget
 {
+    public static function canView(): bool
+    {
+        return auth()->user()->is_admin;
+    }
+
     protected function getStats(): array
     {
         return [
