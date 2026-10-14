@@ -1,0 +1,9 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@import '../../tokens/text.css';
+@import '../../tokens/surface.css';
+@import '../../tokens/border.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+@source '../../../views/components/diff.blade.php';
