@@ -43,7 +43,7 @@ return [
     |
     */
 
-    'component_layout' => 'components.layouts.app',
+    'component_layout' => 'components.layouts.guest',
 
     /*
     |---------------------------------------------------------------------------

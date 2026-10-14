@@ -15,7 +15,7 @@ test('the login screen is reachable by guests', function () {
 test('authenticated users are redirected away from the login screen', function () {
     actingAs(User::factory()->create())
         ->get('/login')
-        ->assertRedirect('/');
+        ->assertRedirect('/admin');
 });
 
 test('users can authenticate with valid credentials', function () {
@@ -24,7 +24,7 @@ test('users can authenticate with valid credentials', function () {
     post('/login', [
         'email' => $user->email,
         'password' => 'password',
-    ])->assertRedirect('/');
+    ])->assertRedirect('/admin');
 
     $this->assertAuthenticatedAs($user);
 });
