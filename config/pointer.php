@@ -13,9 +13,9 @@ return [
     | identity configured here therefore only ever grants access to the support
     | server, never to a customer machine.
     |
-    | The port and the host key policy are not configured here: they come from
-    | the ssh client's own configuration for this host. A relative identity
-    | file is resolved against the storage path.
+    | The port is not configured here: it comes from the ssh client's own
+    | configuration for this host. A relative identity file is resolved
+    | against the storage path.
     |
     */
 

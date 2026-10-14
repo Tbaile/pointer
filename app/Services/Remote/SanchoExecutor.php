@@ -62,7 +62,7 @@ final readonly class SanchoExecutor implements RemoteExecutor
     }
 
     /**
-     * Port and host key policy are left to the ssh client's own configuration.
+     * Port is left to the ssh client's own configuration.
      *
      * @return list<string>
      */
@@ -74,6 +74,7 @@ final readonly class SanchoExecutor implements RemoteExecutor
             '-o', 'BatchMode=yes',
             '-o', 'ConnectTimeout='.self::CONNECT_TIMEOUT_SECONDS,
             '-o', 'LogLevel=ERROR',
+            '-o', 'StrictHostKeyChecking=accept-new',
         ];
 
         if ($this->identityFile !== null) {

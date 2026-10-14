@@ -45,6 +45,7 @@ test('it reaches the target through the support server', function () {
         '-o', 'BatchMode=yes',
         '-o', 'ConnectTimeout=10',
         '-o', 'LogLevel=ERROR',
+        '-o', 'StrictHostKeyChecking=accept-new',
         '-o', 'IdentitiesOnly=yes',
         '-i', '/etc/pointer/id_ed25519',
         'pointer@support.example.com',
