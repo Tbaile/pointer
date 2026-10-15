@@ -3,34 +3,10 @@
 use App\Contracts\RemoteExecutor;
 use App\Mcp\Tools\NethSecurity\ListDevices;
 use App\Services\Privacy\SecretMasker;
-use App\Services\Remote\CommandResult;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-
-function fakeListDevicesExecutor(string|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private string|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return new CommandResult($this->result);
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 function listDevices(RemoteExecutor $executor): Response|ResponseFactory
 {
@@ -39,7 +15,7 @@ function listDevices(RemoteExecutor $executor): Response|ResponseFactory
 }
 
 test('it returns the devices as structured content with private keys masked', function () {
-    $executor = fakeListDevicesExecutor('{"all_devices":[{"name":"eth0"},{"name":"wg1","iface":{"proto":"wireguard","private_key":"4Al1bJOCuxfekhKW5omA0RuICrNJ3QUiXgq1N3O/ong="}}]}');
+    $executor = new FakeRemoteExecutor('{"all_devices":[{"name":"eth0"},{"name":"wg1","iface":{"proto":"wireguard","private_key":"4Al1bJOCuxfekhKW5omA0RuICrNJ3QUiXgq1N3O/ong="}}]}');
 
     $result = listDevices($executor);
 
@@ -58,7 +34,7 @@ test('it returns the devices as structured content with private keys masked', fu
 });
 
 test('it reports a failed call as an error', function () {
-    $result = listDevices(fakeListDevicesExecutor(new RuntimeException('Connection refused.')));
+    $result = listDevices(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
     expect($result)->toBeInstanceOf(Response::class);
     expect($result->isError())->toBeTrue();
@@ -66,7 +42,7 @@ test('it reports a failed call as an error', function () {
 });
 
 test('it reports a call that does not return JSON as an error', function () {
-    $result = listDevices(fakeListDevicesExecutor('not json'));
+    $result = listDevices(new FakeRemoteExecutor('not json'));
 
     expect($result)->toBeInstanceOf(Response::class);
     expect($result->isError())->toBeTrue();

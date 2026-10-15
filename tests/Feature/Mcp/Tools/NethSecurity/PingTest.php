@@ -7,30 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-
-function fakePingExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -52,7 +29,7 @@ const PING_REPLY = <<<'OUTPUT'
     OUTPUT;
 
 test('it pings the target and reports it reachable', function () {
-    $executor = fakePingExecutor(new CommandResult(PING_REPLY));
+    $executor = new FakeRemoteExecutor(new CommandResult(PING_REPLY));
 
     $result = ping($executor, ['target' => '1.1.1.1']);
 
@@ -63,7 +40,7 @@ test('it pings the target and reports it reachable', function () {
 });
 
 test('it sends the requested count from the given source address', function () {
-    $executor = fakePingExecutor(new CommandResult(PING_REPLY));
+    $executor = new FakeRemoteExecutor(new CommandResult(PING_REPLY));
 
     ping($executor, ['target' => 'one.one.one.one', 'count' => 5, 'source_ip' => '10.0.1.1']);
 
@@ -71,7 +48,7 @@ test('it sends the requested count from the given source address', function () {
 });
 
 test('it sends a payload of the given size with the Don\'t Fragment bit through an mwan3 interface', function () {
-    $executor = fakePingExecutor(new CommandResult(PING_REPLY));
+    $executor = new FakeRemoteExecutor(new CommandResult(PING_REPLY));
 
     ping($executor, ['target' => '10.20.0.1', 'interface' => 'wan', 'size' => 1472, 'dont_fragment' => true, 'count' => 2]);
 
@@ -81,14 +58,14 @@ test('it sends a payload of the given size with the Don\'t Fragment bit through 
 test('it reports an unanswered ping as unreachable rather than as an error', function () {
     $output = "PING 192.0.2.1 (192.0.2.1) 56(84) bytes of data.\n\n--- 192.0.2.1 ping statistics ---\n1 packets transmitted, 0 received, 100% packet loss, time 0ms\n\n";
 
-    $result = ping(fakePingExecutor(new CommandResult($output, exitCode: 1)), ['target' => '192.0.2.1']);
+    $result = ping(new FakeRemoteExecutor(new CommandResult($output, exitCode: 1)), ['target' => '192.0.2.1']);
 
     expect($result)->toBeInstanceOf(ResponseFactory::class);
     expect($result->getStructuredContent())->toBe(['reachable' => false, 'exit_code' => 1, 'output' => $output]);
 });
 
 test('it binds the probe to an mwan3 interface and drops the mwan3 preamble', function () {
-    $executor = fakePingExecutor(new CommandResult("Running 'ping -n -c 3 -W 2 1.1.1.1' with DEVICE=eth1 SRCIP=192.168.5.19 FWMARK=0x3f00 FAMILY=ipv4\n".PING_REPLY));
+    $executor = new FakeRemoteExecutor(new CommandResult("Running 'ping -n -c 3 -W 2 1.1.1.1' with DEVICE=eth1 SRCIP=192.168.5.19 FWMARK=0x3f00 FAMILY=ipv4\n".PING_REPLY));
 
     $result = ping($executor, ['target' => '1.1.1.1', 'interface' => 'RED']);
 
@@ -97,7 +74,7 @@ test('it binds the probe to an mwan3 interface and drops the mwan3 preamble', fu
 });
 
 test('it reports an interface mwan3 cannot bind as an error', function () {
-    $result = ping(fakePingExecutor(new CommandResult("could not find device for NOPE\n")), ['target' => '1.1.1.1', 'interface' => 'NOPE']);
+    $result = ping(new FakeRemoteExecutor(new CommandResult("could not find device for NOPE\n")), ['target' => '1.1.1.1', 'interface' => 'NOPE']);
 
     expect($result)->toBeInstanceOf(Response::class);
     expect($result->isError())->toBeTrue();
@@ -107,7 +84,7 @@ test('it reports an interface mwan3 cannot bind as an error', function () {
 test('it rejects an interface mwan3 does not manage and points to source_ip', function () {
     $output = "could not find family for GREEN. Using ipv4.\nRunning 'ping -n -c 3 -W 2 1.1.1.1' with DEVICE=eth0 SRCIP=10.0.1.1 FWMARK=0x3f00 FAMILY=ipv4\n";
 
-    $result = ping(fakePingExecutor(new CommandResult($output, exitCode: 1)), ['target' => '1.1.1.1', 'interface' => 'GREEN']);
+    $result = ping(new FakeRemoteExecutor(new CommandResult($output, exitCode: 1)), ['target' => '1.1.1.1', 'interface' => 'GREEN']);
 
     expect($result)->toBeInstanceOf(Response::class);
     expect($result->isError())->toBeTrue();
@@ -115,7 +92,7 @@ test('it rejects an interface mwan3 does not manage and points to source_ip', fu
 });
 
 test('it reports a failed session as an error', function () {
-    $result = ping(fakePingExecutor(new RuntimeException('Permission denied (publickey).')), ['target' => '1.1.1.1']);
+    $result = ping(new FakeRemoteExecutor(new RuntimeException('Permission denied (publickey).')), ['target' => '1.1.1.1']);
 
     expect($result)->toBeInstanceOf(Response::class);
     expect($result->isError())->toBeTrue();
@@ -123,7 +100,7 @@ test('it reports a failed session as an error', function () {
 });
 
 test('it accepts an IPv6 target', function () {
-    $executor = fakePingExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     ping($executor, ['target' => '2606:4700:4700::1111']);
 
@@ -131,7 +108,7 @@ test('it accepts an IPv6 target', function () {
 });
 
 test('it rejects invalid arguments without reaching the machine', function (array $arguments) {
-    $executor = fakePingExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => ping($executor, $arguments))->toThrow(ValidationException::class);
     expect($executor->calledWithCommand)->toBeNull();

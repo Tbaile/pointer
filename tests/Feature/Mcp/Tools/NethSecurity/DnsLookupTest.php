@@ -7,27 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-
-function fakeNsecDnsLookupExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -40,7 +20,7 @@ function nsecDnsLookup(RemoteExecutor $executor, array $arguments): Response|Res
 
 test('it resolves the name through the firewall DNS server', function () {
     $output = "Server:\t\t127.0.0.1\nAddress:\t127.0.0.1:53\n\nNon-authoritative answer:\nName:\tnethserver.org\nAddress: 35.214.216.68\n";
-    $executor = fakeNsecDnsLookupExecutor(new CommandResult($output));
+    $executor = new FakeRemoteExecutor(new CommandResult($output));
 
     $result = nsecDnsLookup($executor, ['name' => 'nethserver.org']);
 
@@ -52,13 +32,13 @@ test('it resolves the name through the firewall DNS server', function () {
 test('it reports a missing name rather than an error', function () {
     $output = "** server can't find nonexist.invalid: NXDOMAIN\n";
 
-    $result = nsecDnsLookup(fakeNsecDnsLookupExecutor(new CommandResult($output, exitCode: 1)), ['name' => 'nonexist.invalid']);
+    $result = nsecDnsLookup(new FakeRemoteExecutor(new CommandResult($output, exitCode: 1)), ['name' => 'nonexist.invalid']);
 
     expect($result->getStructuredContent())->toBe(['resolved' => false, 'exit_code' => 1, 'output' => $output]);
 });
 
 test('it rejects unsafe input without running anything', function (array $arguments) {
-    $executor = fakeNsecDnsLookupExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => nsecDnsLookup($executor, $arguments))->toThrow(ValidationException::class);
     expect($executor->calledWithCommand)->toBeNull();
@@ -69,7 +49,7 @@ test('it rejects unsafe input without running anything', function (array $argume
 ]);
 
 test('it returns an error when the machine cannot be reached', function () {
-    $result = nsecDnsLookup(fakeNsecDnsLookupExecutor(new RuntimeException('Connection timed out')), ['name' => 'nethserver.org']);
+    $result = nsecDnsLookup(new FakeRemoteExecutor(new RuntimeException('Connection timed out')), ['name' => 'nethserver.org']);
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection timed out');

@@ -7,30 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-
-function fakeServiceStatusExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -42,7 +19,7 @@ function serviceStatus(RemoteExecutor $executor, array $arguments = []): Respons
 }
 
 test('it lists every service when none is given', function () {
-    $executor = fakeServiceStatusExecutor(new CommandResult("/etc/init.d/banip    enabled    running\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("/etc/init.d/banip    enabled    running\n"));
 
     $result = serviceStatus($executor);
 
@@ -53,7 +30,7 @@ test('it lists every service when none is given', function () {
 });
 
 test('it asks the service status by default', function () {
-    $executor = fakeServiceStatusExecutor(new CommandResult("running\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("running\n"));
 
     serviceStatus($executor, ['service' => 'nginx']);
 
@@ -61,7 +38,7 @@ test('it asks the service status by default', function () {
 });
 
 test('it runs the given command', function () {
-    $executor = fakeServiceStatusExecutor(new CommandResult('{}'));
+    $executor = new FakeRemoteExecutor(new CommandResult('{}'));
 
     serviceStatus($executor, ['service' => 'telegraf', 'command' => 'info']);
 
@@ -69,14 +46,14 @@ test('it runs the given command', function () {
 });
 
 test('it returns a non-zero exit as a result rather than as an error', function () {
-    $result = serviceStatus(fakeServiceStatusExecutor(new CommandResult('', '', 1)), ['service' => 'conntrackd', 'command' => 'running']);
+    $result = serviceStatus(new FakeRemoteExecutor(new CommandResult('', '', 1)), ['service' => 'conntrackd', 'command' => 'running']);
 
     expect($result)->toBeInstanceOf(ResponseFactory::class);
     expect($result->getStructuredContent())->toBe(['exit_code' => 1, 'output' => '']);
 });
 
 test('it rejects a command that is not read-only', function () {
-    $executor = fakeServiceStatusExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => serviceStatus($executor, ['service' => 'nginx', 'command' => 'restart']))
         ->toThrow(ValidationException::class);
@@ -84,7 +61,7 @@ test('it rejects a command that is not read-only', function () {
 });
 
 test('it rejects a service name that tries to break out of the shell', function () {
-    $executor = fakeServiceStatusExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => serviceStatus($executor, ['service' => 'nginx; reboot']))
         ->toThrow(ValidationException::class);
@@ -92,7 +69,7 @@ test('it rejects a service name that tries to break out of the shell', function 
 });
 
 test('it reports a failed call as an error', function () {
-    $result = serviceStatus(fakeServiceStatusExecutor(new RuntimeException('Connection refused.')));
+    $result = serviceStatus(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
     expect($result)->toBeInstanceOf(Response::class);
     expect($result->isError())->toBeTrue();

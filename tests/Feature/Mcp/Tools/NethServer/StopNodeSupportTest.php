@@ -6,30 +6,7 @@ use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeStopNodeSupportExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -41,7 +18,7 @@ function stopNodeSupport(RemoteExecutor $executor, array $arguments): Response
 }
 
 test('it stops the support session of the node', function () {
-    $executor = fakeStopNodeSupportExecutor(new CommandResult("null\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("null\n"));
 
     $result = stopNodeSupport($executor, ['node' => 2]);
 
@@ -52,13 +29,13 @@ test('it stops the support session of the node', function () {
 });
 
 test('it requires user interaction', function () {
-    $tool = new StopNodeSupport(fakeStopNodeSupportExecutor(new CommandResult('')));
+    $tool = new StopNodeSupport(new FakeRemoteExecutor(new CommandResult('')));
 
     expect($tool->toArray()['_meta'] ?? null)->toBe(['anthropic/requiresUserInteraction' => true]);
 });
 
 test('it rejects a node that is not a positive integer', function (mixed $node) {
-    $executor = fakeStopNodeSupportExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => stopNodeSupport($executor, ['node' => $node]))
         ->toThrow(ValidationException::class);
@@ -67,7 +44,7 @@ test('it rejects a node that is not a positive integer', function (mixed $node) 
 
 test('it reports an unknown node as an error', function () {
     $result = stopNodeSupport(
-        fakeStopNodeSupportExecutor(new CommandResult("TaskSubmissionCheckFailed: Client \"node/9\" was not found\n", '', 1)),
+        new FakeRemoteExecutor(new CommandResult("TaskSubmissionCheckFailed: Client \"node/9\" was not found\n", '', 1)),
         ['node' => 9],
     );
 
@@ -76,7 +53,7 @@ test('it reports an unknown node as an error', function () {
 });
 
 test('it reports a failed call as an error', function () {
-    $result = stopNodeSupport(fakeStopNodeSupportExecutor(new RuntimeException('Connection refused.')), ['node' => 2]);
+    $result = stopNodeSupport(new FakeRemoteExecutor(new RuntimeException('Connection refused.')), ['node' => 2]);
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

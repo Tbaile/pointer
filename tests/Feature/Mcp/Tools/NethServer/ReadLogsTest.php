@@ -6,30 +6,7 @@ use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeReadLogsExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -41,7 +18,7 @@ function readLogs(RemoteExecutor $executor, array $arguments = []): Response
 }
 
 test('it dumps the cluster logs by default and returns them as text', function () {
-    $executor = fakeReadLogsExecutor(new CommandResult("2026-10-07T12:13:32Z [1:traefik1:traefik] GET / 200\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("2026-10-07T12:13:32Z [1:traefik1:traefik] GET / 200\n"));
 
     $result = readLogs($executor);
 
@@ -52,7 +29,7 @@ test('it dumps the cluster logs by default and returns them as text', function (
 });
 
 test('it passes every filter to api-server-logs', function () {
-    $executor = fakeReadLogsExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     readLogs($executor, [
         'entity' => 'module',
@@ -69,7 +46,7 @@ test('it passes every filter to api-server-logs', function () {
 });
 
 test('it escapes a search that tries to break out of the shell', function () {
-    $executor = fakeReadLogsExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     readLogs($executor, ['search' => "x'; reboot; '"]);
 
@@ -77,7 +54,7 @@ test('it escapes a search that tries to break out of the shell', function () {
 });
 
 test('it requires a name for a module', function () {
-    $executor = fakeReadLogsExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => readLogs($executor, ['entity' => 'module']))
         ->toThrow(ValidationException::class);
@@ -85,7 +62,7 @@ test('it requires a name for a module', function () {
 });
 
 test('it rejects a name that is not a plain id', function () {
-    $executor = fakeReadLogsExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => readLogs($executor, ['entity' => 'module', 'name' => 'traefik1 -m tail']))
         ->toThrow(ValidationException::class);
@@ -94,7 +71,7 @@ test('it rejects a name that is not a plain id', function () {
 
 test('it reports a failed api-server-logs run as an error', function () {
     $result = readLogs(
-        fakeReadLogsExecutor(new CommandResult("2026/10/07 12:14:50 Unable to parse time\n", 'Pseudo-terminal will not be allocated', 1)),
+        new FakeRemoteExecutor(new CommandResult("2026/10/07 12:14:50 Unable to parse time\n", 'Pseudo-terminal will not be allocated', 1)),
         ['from' => 'bad-date'],
     );
 
@@ -103,7 +80,7 @@ test('it reports a failed api-server-logs run as an error', function () {
 });
 
 test('it reports a failed call as an error', function () {
-    $result = readLogs(fakeReadLogsExecutor(new RuntimeException('Connection refused.')));
+    $result = readLogs(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

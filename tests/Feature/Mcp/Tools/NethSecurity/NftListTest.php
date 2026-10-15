@@ -6,30 +6,7 @@ use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeNftListExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -41,7 +18,7 @@ function nftList(RemoteExecutor $executor, array $arguments = []): Response
 }
 
 test('it lists the ruleset without set elements by default and returns it as text', function () {
-    $executor = fakeNftListExecutor(new CommandResult("table inet banIP {\n}\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("table inet banIP {\n}\n"));
 
     $result = nftList($executor);
 
@@ -52,7 +29,7 @@ test('it lists the ruleset without set elements by default and returns it as tex
 });
 
 test('it lists one chain by family, table and name', function () {
-    $executor = fakeNftListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     nftList($executor, ['object' => 'chain', 'family' => 'inet', 'table' => 'banIP', 'name' => '_inbound']);
 
@@ -60,7 +37,7 @@ test('it lists one chain by family, table and name', function () {
 });
 
 test('it lists the elements of a set only when asked', function () {
-    $executor = fakeNftListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     nftList($executor, ['object' => 'set', 'family' => 'inet', 'table' => 'banIP', 'name' => 'blocklist.v4', 'elements' => true]);
 
@@ -68,7 +45,7 @@ test('it lists the elements of a set only when asked', function () {
 });
 
 test('it rejects incomplete or unsafe arguments', function (array $arguments) {
-    $executor = fakeNftListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => nftList($executor, $arguments))->toThrow(ValidationException::class);
     expect($executor->calledWithCommand)->toBeNull();
@@ -82,7 +59,7 @@ test('it rejects incomplete or unsafe arguments', function (array $arguments) {
 
 test('it reports a failed nft as an error', function () {
     $result = nftList(
-        fakeNftListExecutor(new CommandResult("Error: No such file or directory\nlist table inet missing\n", '', 1)),
+        new FakeRemoteExecutor(new CommandResult("Error: No such file or directory\nlist table inet missing\n", '', 1)),
         ['object' => 'table', 'family' => 'inet', 'table' => 'missing'],
     );
 
@@ -91,7 +68,7 @@ test('it reports a failed nft as an error', function () {
 });
 
 test('it reports a failed call as an error', function () {
-    $result = nftList(fakeNftListExecutor(new RuntimeException('Connection refused.')));
+    $result = nftList(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

@@ -5,30 +5,7 @@ use App\Mcp\Tools\NethServer\ListModules;
 use App\Services\Remote\CommandResult;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeListModulesExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 function listModules(RemoteExecutor $executor): Response
 {
@@ -37,7 +14,7 @@ function listModules(RemoteExecutor $executor): Response
 }
 
 test('it lists every instance as one row sorted by id', function () {
-    $executor = fakeListModulesExecutor(new CommandResult(json_encode([
+    $executor = new FakeRemoteExecutor(new CommandResult(json_encode([
         'ghcr.io/nethserver/webtop' => [
             ['id' => 'webtop10', 'source' => 'ghcr.io/nethserver/webtop', 'version' => '1.4.2', 'module' => 'webtop', 'node' => '2', 'digest' => 'sha256:aa', 'logo' => '', 'flags' => ['rootless']],
             ['id' => 'webtop3', 'source' => 'ghcr.io/nethserver/webtop', 'version' => '1.4.1', 'module' => 'webtop', 'node' => '1', 'digest' => 'sha256:bb', 'logo' => '', 'flags' => ['rootless']],
@@ -61,21 +38,21 @@ test('it lists every instance as one row sorted by id', function () {
 });
 
 test('it reports a failed api-cli run as an error', function () {
-    $result = listModules(fakeListModulesExecutor(new CommandResult("TaskSubmissionCheckFailed: Client \"cluster\" was not found\n", '', 1)));
+    $result = listModules(new FakeRemoteExecutor(new CommandResult("TaskSubmissionCheckFailed: Client \"cluster\" was not found\n", '', 1)));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('TaskSubmissionCheckFailed: Client "cluster" was not found');
 });
 
 test('it reports output that is not JSON as an error', function () {
-    $result = listModules(fakeListModulesExecutor(new CommandResult("bash: api-cli: command not found\n")));
+    $result = listModules(new FakeRemoteExecutor(new CommandResult("bash: api-cli: command not found\n")));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('bash: api-cli: command not found');
 });
 
 test('it reports a failed call as an error', function () {
-    $result = listModules(fakeListModulesExecutor(new RuntimeException('Connection refused.')));
+    $result = listModules(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

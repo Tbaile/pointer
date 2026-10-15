@@ -2,35 +2,11 @@
 
 use App\Contracts\RemoteExecutor;
 use App\Mcp\Tools\NethSecurity\VictoriaQuery;
-use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-
-function fakeVictoriaQueryExecutor(string|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private string|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return new CommandResult($this->result);
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, string>  $arguments
@@ -42,7 +18,7 @@ function victoriaQuery(RemoteExecutor $executor, array $arguments): Response|Res
 }
 
 test('it runs an instant query and returns the response as structured content', function () {
-    $executor = fakeVictoriaQueryExecutor('{"status":"success","data":{"resultType":"vector","result":[{"metric":{"alertname":"WanDown"},"value":[1790167025,"1"]}]}}');
+    $executor = new FakeRemoteExecutor('{"status":"success","data":{"resultType":"vector","result":[{"metric":{"alertname":"WanDown"},"value":[1790167025,"1"]}]}}');
 
     $result = victoriaQuery($executor, ['endpoint' => 'query', 'query' => 'ALERTS{alertstate="firing"}']);
 
@@ -56,7 +32,7 @@ test('it runs an instant query and returns the response as structured content', 
 });
 
 test('it passes the range parameters to a range query', function () {
-    $executor = fakeVictoriaQueryExecutor('{"status":"success","data":{"resultType":"matrix","result":[]}}');
+    $executor = new FakeRemoteExecutor('{"status":"success","data":{"resultType":"matrix","result":[]}}');
 
     victoriaQuery($executor, ['endpoint' => 'query_range', 'query' => 'ALERTS', 'start' => '-7d', 'end' => '-1d', 'step' => '1h']);
 
@@ -64,7 +40,7 @@ test('it passes the range parameters to a range query', function () {
 });
 
 test('it lists the values of a label narrowed by a selector', function () {
-    $executor = fakeVictoriaQueryExecutor('{"status":"success","data":["ServiceDown","WanDown"]}');
+    $executor = new FakeRemoteExecutor('{"status":"success","data":["ServiceDown","WanDown"]}');
 
     victoriaQuery($executor, ['endpoint' => 'label_values', 'label' => 'alertname', 'query' => 'ALERTS', 'start' => '-1y']);
 
@@ -72,7 +48,7 @@ test('it lists the values of a label narrowed by a selector', function () {
 });
 
 test('it escapes a query that tries to break out of the shell', function () {
-    $executor = fakeVictoriaQueryExecutor('{"status":"success","data":[]}');
+    $executor = new FakeRemoteExecutor('{"status":"success","data":[]}');
 
     victoriaQuery($executor, ['endpoint' => 'series', 'query' => "up'; reboot; '"]);
 
@@ -80,7 +56,7 @@ test('it escapes a query that tries to break out of the shell', function () {
 });
 
 test('it rejects a label that is not a valid label name', function () {
-    $executor = fakeVictoriaQueryExecutor('{"status":"success","data":[]}');
+    $executor = new FakeRemoteExecutor('{"status":"success","data":[]}');
 
     expect(fn () => victoriaQuery($executor, ['endpoint' => 'label_values', 'label' => '../admin/tsdb/delete_series']))
         ->toThrow(ValidationException::class);
@@ -88,7 +64,7 @@ test('it rejects a label that is not a valid label name', function () {
 });
 
 test('it rejects an endpoint outside the read-only ones', function () {
-    $executor = fakeVictoriaQueryExecutor('{"status":"success","data":[]}');
+    $executor = new FakeRemoteExecutor('{"status":"success","data":[]}');
 
     expect(fn () => victoriaQuery($executor, ['endpoint' => 'admin/tsdb/delete_series', 'query' => 'up']))
         ->toThrow(ValidationException::class);
@@ -97,7 +73,7 @@ test('it rejects an endpoint outside the read-only ones', function () {
 
 test('it reports a VictoriaMetrics error as an error', function () {
     $result = victoriaQuery(
-        fakeVictoriaQueryExecutor('{"status":"error","errorType":"422","error":"unparsed data: \"\""}'),
+        new FakeRemoteExecutor('{"status":"error","errorType":"422","error":"unparsed data: \"\""}'),
         ['endpoint' => 'query', 'query' => 'foo('],
     );
 
@@ -107,7 +83,7 @@ test('it reports a VictoriaMetrics error as an error', function () {
 });
 
 test('it reports a failed call as an error', function () {
-    $result = victoriaQuery(fakeVictoriaQueryExecutor(new RuntimeException('Connection refused.')), ['endpoint' => 'query', 'query' => 'up']);
+    $result = victoriaQuery(new FakeRemoteExecutor(new RuntimeException('Connection refused.')), ['endpoint' => 'query', 'query' => 'up']);
 
     expect($result)->toBeInstanceOf(Response::class);
     expect($result->isError())->toBeTrue();
@@ -115,7 +91,7 @@ test('it reports a failed call as an error', function () {
 });
 
 test('it reports a truncated response as an error', function () {
-    $result = victoriaQuery(fakeVictoriaQueryExecutor('{"status":"success","data":["cpu_'), ['endpoint' => 'label_values', 'label' => '__name__']);
+    $result = victoriaQuery(new FakeRemoteExecutor('{"status":"success","data":["cpu_'), ['endpoint' => 'label_values', 'label' => '__name__']);
 
     expect($result)->toBeInstanceOf(Response::class);
     expect($result->isError())->toBeTrue();

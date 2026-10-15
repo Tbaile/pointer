@@ -6,30 +6,7 @@ use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeReadSystemLogExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -41,7 +18,7 @@ function readSystemLog(RemoteExecutor $executor, array $arguments = []): Respons
 }
 
 test('it tails the memory log by default and returns it as text', function () {
-    $executor = fakeReadSystemLogExecutor(new CommandResult("Oct  9 10:36:22 fw dropbear[13023]: Child connection from 10.0.1.10:55338\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("Oct  9 10:36:22 fw dropbear[13023]: Child connection from 10.0.1.10:55338\n"));
 
     $result = readSystemLog($executor);
 
@@ -52,7 +29,7 @@ test('it tails the memory log by default and returns it as text', function () {
 });
 
 test('it filters the lines with the pattern as a perl regex', function () {
-    $executor = fakeReadSystemLogExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     readSystemLog($executor, [
         'pattern' => '^(?!.*victoria-metrics).*ns-plug\[\d+\]',
@@ -63,7 +40,7 @@ test('it filters the lines with the pattern as a perl regex', function () {
 });
 
 test('it reads the rotated and current files of the data storage', function () {
-    $executor = fakeReadSystemLogExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     readSystemLog($executor, ['source' => 'storage']);
 
@@ -71,7 +48,7 @@ test('it reads the rotated and current files of the data storage', function () {
 });
 
 test('it escapes a pattern that tries to break out of the shell', function () {
-    $executor = fakeReadSystemLogExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     readSystemLog($executor, ['pattern' => "x'; reboot; '"]);
 
@@ -79,7 +56,7 @@ test('it escapes a pattern that tries to break out of the shell', function () {
 });
 
 test('it rejects a pattern longer than 500 characters', function () {
-    $executor = fakeReadSystemLogExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => readSystemLog($executor, ['pattern' => str_repeat('a', 501)]))
         ->toThrow(ValidationException::class);
@@ -87,7 +64,7 @@ test('it rejects a pattern longer than 500 characters', function () {
 });
 
 test('it rejects a pattern that is not a valid regex', function () {
-    $executor = fakeReadSystemLogExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => readSystemLog($executor, ['pattern' => '(unclosed']))
         ->toThrow(ValidationException::class);
@@ -95,7 +72,7 @@ test('it rejects a pattern that is not a valid regex', function () {
 });
 
 test('it rejects an unknown source', function () {
-    $executor = fakeReadSystemLogExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => readSystemLog($executor, ['source' => '/etc/shadow']))
         ->toThrow(ValidationException::class);
@@ -103,7 +80,7 @@ test('it rejects an unknown source', function () {
 });
 
 test('it reports a failed call as an error', function () {
-    $result = readSystemLog(fakeReadSystemLogExecutor(new RuntimeException('Connection refused.')));
+    $result = readSystemLog(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

@@ -8,30 +8,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-
-function fakeRunCommandExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -44,7 +21,7 @@ function runCommand(RemoteExecutor $executor, array $arguments): Response|Respon
 
 test('it runs the command on the target and returns its result', function () {
     $toolRequest = ToolRequest::factory()->create();
-    $executor = fakeRunCommandExecutor(new CommandResult("line\n", 'warning', 0));
+    $executor = new FakeRemoteExecutor(new CommandResult("line\n", 'warning', 0));
 
     $result = runCommand($executor, ['tool_request_id' => $toolRequest->id, 'command' => 'logread | grep openvpn']);
 
@@ -58,7 +35,7 @@ test('it returns a non-zero exit as a result rather than as an error', function 
     $toolRequest = ToolRequest::factory()->create();
 
     $result = runCommand(
-        fakeRunCommandExecutor(new CommandResult('', 'No such file', 1)),
+        new FakeRemoteExecutor(new CommandResult('', 'No such file', 1)),
         ['tool_request_id' => $toolRequest->id, 'command' => 'cat /missing'],
     );
 
@@ -70,7 +47,7 @@ test('it reports a broken session as an error', function () {
     $toolRequest = ToolRequest::factory()->create();
 
     $result = runCommand(
-        fakeRunCommandExecutor(new RuntimeException('Connection refused')),
+        new FakeRemoteExecutor(new RuntimeException('Connection refused')),
         ['tool_request_id' => $toolRequest->id, 'command' => 'uptime'],
     );
 
@@ -82,7 +59,7 @@ test('it reports a broken session as an error', function () {
 test('it refuses to run without an existing tool request', function () {
     $deleted = ToolRequest::factory()->create();
     $deleted->delete();
-    $executor = fakeRunCommandExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => runCommand($executor, ['command' => 'uptime']))->toThrow(ValidationException::class);
     expect(fn () => runCommand($executor, ['tool_request_id' => $deleted->id, 'command' => 'uptime']))->toThrow(ValidationException::class);

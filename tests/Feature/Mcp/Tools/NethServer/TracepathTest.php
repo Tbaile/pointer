@@ -7,23 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-
-function fakeTracepathExecutor(CommandResult $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithCommand = $command;
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -52,7 +36,7 @@ const TRACEPATH_NO_REPLY = <<<'OUTPUT'
     OUTPUT;
 
 test('it traces the path and reports the target reached', function () {
-    $executor = fakeTracepathExecutor(new CommandResult(TRACEPATH_REACHED));
+    $executor = new FakeRemoteExecutor(new CommandResult(TRACEPATH_REACHED));
 
     $result = tracepath($executor, ['target' => 'nethserver.org']);
 
@@ -62,13 +46,13 @@ test('it traces the path and reports the target reached', function () {
 });
 
 test('it reports a path ending in no reply as unreachable although tracepath exits 0', function () {
-    $result = tracepath(fakeTracepathExecutor(new CommandResult(TRACEPATH_NO_REPLY)), ['target' => '1.1.1.1', 'max_hops' => 2]);
+    $result = tracepath(new FakeRemoteExecutor(new CommandResult(TRACEPATH_NO_REPLY)), ['target' => '1.1.1.1', 'max_hops' => 2]);
 
     expect($result->getStructuredContent())->toBe(['reachable' => false, 'exit_code' => 0, 'output' => TRACEPATH_NO_REPLY]);
 });
 
 test('it limits the hops', function () {
-    $executor = fakeTracepathExecutor(new CommandResult(TRACEPATH_NO_REPLY));
+    $executor = new FakeRemoteExecutor(new CommandResult(TRACEPATH_NO_REPLY));
 
     tracepath($executor, ['target' => '1.1.1.1', 'max_hops' => 2]);
 
@@ -76,7 +60,7 @@ test('it limits the hops', function () {
 });
 
 test('it rejects unsafe input without running anything', function (array $arguments) {
-    $executor = fakeTracepathExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => tracepath($executor, $arguments))->toThrow(ValidationException::class);
     expect($executor->calledWithCommand)->toBeNull();

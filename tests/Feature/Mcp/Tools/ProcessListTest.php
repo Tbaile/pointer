@@ -6,30 +6,7 @@ use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeProcessListExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -42,7 +19,7 @@ function processList(RemoteExecutor $executor, array $arguments = []): Response
 
 test('it lists the top 30 processes by memory by default', function () {
     $output = "  PID  PPID USER     STAT NLWP   RSS    VSZ %CPU     TIME                  STARTED COMMAND\n 3496     1 root     Sl     11 103540 1510692 1.6     23 Wed Oct 14 10:58:28 2026 victoria-metric\n";
-    $executor = fakeProcessListExecutor(new CommandResult($output));
+    $executor = new FakeRemoteExecutor(new CommandResult($output));
 
     $result = processList($executor);
 
@@ -53,7 +30,7 @@ test('it lists the top 30 processes by memory by default', function () {
 });
 
 test('it sorts the processes by cpu seconds used', function () {
-    $executor = fakeProcessListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     processList($executor, ['sort' => 'time', 'limit' => 10]);
 
@@ -61,7 +38,7 @@ test('it sorts the processes by cpu seconds used', function () {
 });
 
 test('it selects one process by pid', function () {
-    $executor = fakeProcessListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     processList($executor, ['pid' => 30162]);
 
@@ -69,7 +46,7 @@ test('it selects one process by pid', function () {
 });
 
 test('it selects the processes by name', function () {
-    $executor = fakeProcessListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     processList($executor, ['name' => 'nginx', 'sort' => 'cpu']);
 
@@ -77,7 +54,7 @@ test('it selects the processes by name', function () {
 });
 
 test('it lists the top threads with sort and prepends the header', function () {
-    $executor = fakeProcessListExecutor(new CommandResult(" 5183  5242     1 root     Sl   23364 1280244 0.0      436 Wed Oct  7 10:27:04 2026 ns-stats\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult(" 5183  5242     1 root     Sl   23364 1280244 0.0      436 Wed Oct  7 10:27:04 2026 ns-stats\n"));
 
     $result = processList($executor, ['threads' => true, 'sort' => 'time']);
 
@@ -86,7 +63,7 @@ test('it lists the top threads with sort and prepends the header', function () {
 });
 
 test('it lists every thread of one process with pipefail', function () {
-    $executor = fakeProcessListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     processList($executor, ['threads' => true, 'pid' => 18196]);
 
@@ -94,14 +71,14 @@ test('it lists every thread of one process with pipefail', function () {
 });
 
 test('it reports no matching process as an error', function () {
-    $result = processList(fakeProcessListExecutor(new CommandResult("  PID  PPID USER     STAT NLWP   RSS    VSZ %CPU     TIME                  STARTED COMMAND\n", exitCode: 1)), ['name' => 'nosuch']);
+    $result = processList(new FakeRemoteExecutor(new CommandResult("  PID  PPID USER     STAT NLWP   RSS    VSZ %CPU     TIME                  STARTED COMMAND\n", exitCode: 1)), ['name' => 'nosuch']);
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('No process matches.');
 });
 
 test('it rejects pid and name together', function () {
-    $executor = fakeProcessListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => processList($executor, ['pid' => 1, 'name' => 'nginx']))
         ->toThrow(ValidationException::class);
@@ -109,7 +86,7 @@ test('it rejects pid and name together', function () {
 });
 
 test('it rejects a name that tries to break out of the shell', function () {
-    $executor = fakeProcessListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => processList($executor, ['name' => "x'; reboot"]))
         ->toThrow(ValidationException::class);
@@ -117,7 +94,7 @@ test('it rejects a name that tries to break out of the shell', function () {
 });
 
 test('it rejects an unknown sort', function () {
-    $executor = fakeProcessListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => processList($executor, ['sort' => 'args']))
         ->toThrow(ValidationException::class);
@@ -125,7 +102,7 @@ test('it rejects an unknown sort', function () {
 });
 
 test('it reports a failed call as an error', function () {
-    $result = processList(fakeProcessListExecutor(new RuntimeException('Connection refused.')));
+    $result = processList(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

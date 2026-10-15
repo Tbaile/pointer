@@ -6,30 +6,7 @@ use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeFileChecksumsExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -41,7 +18,7 @@ function fileChecksums(RemoteExecutor $executor, array $arguments = []): Respons
 }
 
 test('it lists the md5 checksum, size and time of every file sorted by path', function () {
-    $executor = fakeFileChecksumsExecutor(new CommandResult("2026-10-08 16:45:04 1509 ff693e38014ba8118042b81bdd60fab7  /etc/config/network\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("2026-10-08 16:45:04 1509 ff693e38014ba8118042b81bdd60fab7  /etc/config/network\n"));
 
     $result = fileChecksums($executor, ['paths' => ['/etc/config', '/etc/passwd']]);
 
@@ -52,7 +29,7 @@ test('it lists the md5 checksum, size and time of every file sorted by path', fu
 });
 
 test('it hashes with sha256 when asked', function () {
-    $executor = fakeFileChecksumsExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     fileChecksums($executor, ['paths' => ['/etc/config'], 'algorithm' => 'sha256']);
 
@@ -60,7 +37,7 @@ test('it hashes with sha256 when asked', function () {
 });
 
 test('it returns one hash over every file with aggregate', function () {
-    $executor = fakeFileChecksumsExecutor(new CommandResult("bc2d70976fc659e8f38ebf1974790dcf  -\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("bc2d70976fc659e8f38ebf1974790dcf  -\n"));
 
     $result = fileChecksums($executor, ['paths' => ['/etc/config', '/etc/passwd'], 'aggregate' => true]);
 
@@ -69,7 +46,7 @@ test('it returns one hash over every file with aggregate', function () {
 });
 
 test('it appends the paths that do not exist to the list', function () {
-    $executor = fakeFileChecksumsExecutor(new CommandResult(
+    $executor = new FakeRemoteExecutor(new CommandResult(
         "2026-10-12 08:43:35 529 8c7b56df060943657f776437949ef77e  /etc/passwd\n",
         "find: ‘/etc/backup.pass’: No such file or directory\n",
     ));
@@ -81,7 +58,7 @@ test('it appends the paths that do not exist to the list', function () {
 });
 
 test('it rejects a path that is unsafe or reaches the root or a virtual filesystem', function (string $path) {
-    $executor = fakeFileChecksumsExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => fileChecksums($executor, ['paths' => [$path]]))
         ->toThrow(ValidationException::class);
@@ -99,7 +76,7 @@ test('it rejects a path that is unsafe or reaches the root or a virtual filesyst
 ]);
 
 test('it rejects a missing path list and an unknown algorithm', function (array $arguments) {
-    $executor = fakeFileChecksumsExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => fileChecksums($executor, $arguments))
         ->toThrow(ValidationException::class);
@@ -111,14 +88,14 @@ test('it rejects a missing path list and an unknown algorithm', function (array 
 ]);
 
 test('it reports a failed command as an error', function () {
-    $result = fileChecksums(fakeFileChecksumsExecutor(new CommandResult('', 'sort: write failed', 2)), ['paths' => ['/etc']]);
+    $result = fileChecksums(new FakeRemoteExecutor(new CommandResult('', 'sort: write failed', 2)), ['paths' => ['/etc']]);
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('sort: write failed');
 });
 
 test('it reports a failed call as an error', function () {
-    $result = fileChecksums(fakeFileChecksumsExecutor(new RuntimeException('Connection refused.')), ['paths' => ['/etc']]);
+    $result = fileChecksums(new FakeRemoteExecutor(new RuntimeException('Connection refused.')), ['paths' => ['/etc']]);
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

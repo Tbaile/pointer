@@ -3,28 +3,11 @@
 use App\Contracts\RemoteExecutor;
 use App\Mcp\Tools\NethSecurity\GetUciConfig;
 use App\Services\Privacy\SecretMasker;
-use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-
-function fakeGetUciConfigExecutor(string $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private string $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithCommand = $command;
-
-            return new CommandResult($this->result);
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -41,7 +24,7 @@ function maskedUciValue(string $value): string
 }
 
 test('it returns the configuration with secrets masked', function () {
-    $executor = fakeGetUciConfigExecutor(json_encode(['values' => [
+    $executor = new FakeRemoteExecutor(json_encode(['values' => [
         'wg1' => ['proto' => 'wireguard', 'private_key' => 'cHJpdmF0ZQ==', 'public_key' => 'cHVibGlj'],
         'peer' => ['preshared_key' => 'c2hhcmVk', 'allowed_ips' => ['10.0.0.2/32']],
     ]]));
@@ -57,7 +40,7 @@ test('it returns the configuration with secrets masked', function () {
 });
 
 test('it filters sections by type and matching options', function () {
-    $executor = fakeGetUciConfigExecutor('{"values":{}}');
+    $executor = new FakeRemoteExecutor('{"values":{}}');
 
     getUciConfig($executor, ['config' => 'firewall', 'type' => 'rule', 'match' => ['target' => 'DROP']]);
 
@@ -65,7 +48,7 @@ test('it filters sections by type and matching options', function () {
 });
 
 test('it rejects invalid arguments', function (array $arguments) {
-    expect(fn () => getUciConfig(fakeGetUciConfigExecutor('{}'), $arguments))
+    expect(fn () => getUciConfig(new FakeRemoteExecutor('{}'), $arguments))
         ->toThrow(ValidationException::class);
 })->with([
     'missing config' => [[]],

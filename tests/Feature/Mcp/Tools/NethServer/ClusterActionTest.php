@@ -6,27 +6,7 @@ use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeClusterActionExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -39,7 +19,7 @@ function clusterAction(RemoteExecutor $executor, array $arguments): Response
 
 test('it runs the cluster action and returns its output', function () {
     $output = '[{"name": "subscription", "url": "https://subscription.nethserver.com/distfeed/", "testing": false, "status": true}]'."\n";
-    $executor = fakeClusterActionExecutor(new CommandResult($output));
+    $executor = new FakeRemoteExecutor(new CommandResult($output));
 
     $result = clusterAction($executor, ['action' => 'list-repositories']);
 
@@ -49,7 +29,7 @@ test('it runs the cluster action and returns its output', function () {
 });
 
 test('it rejects actions outside the whitelist without running anything', function (array $arguments) {
-    $executor = fakeClusterActionExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => clusterAction($executor, $arguments))->toThrow(ValidationException::class);
     expect($executor->calledWithCommand)->toBeNull();
@@ -61,14 +41,14 @@ test('it rejects actions outside the whitelist without running anything', functi
 ]);
 
 test('it returns the api-cli error when the action fails', function () {
-    $result = clusterAction(fakeClusterActionExecutor(new CommandResult("Error: not the leader node\n", exitCode: 1)), ['action' => 'list-nodes']);
+    $result = clusterAction(new FakeRemoteExecutor(new CommandResult("Error: not the leader node\n", exitCode: 1)), ['action' => 'list-nodes']);
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Error: not the leader node');
 });
 
 test('it returns an error when the machine cannot be reached', function () {
-    $result = clusterAction(fakeClusterActionExecutor(new RuntimeException('Connection timed out')), ['action' => 'list-nodes']);
+    $result = clusterAction(new FakeRemoteExecutor(new RuntimeException('Connection timed out')), ['action' => 'list-nodes']);
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection timed out');

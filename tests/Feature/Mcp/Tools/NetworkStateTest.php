@@ -6,30 +6,7 @@ use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeNetworkStateExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -41,7 +18,7 @@ function networkState(RemoteExecutor $executor, array $arguments = []): Response
 }
 
 test('it lists the addresses by default', function () {
-    $executor = fakeNetworkStateExecutor(new CommandResult("eth0             UP             167.71.65.37/20\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("eth0             UP             167.71.65.37/20\n"));
 
     $result = networkState($executor);
 
@@ -52,7 +29,7 @@ test('it lists the addresses by default', function () {
 });
 
 test('it runs the command of each object', function (array $arguments, string $command) {
-    $executor = fakeNetworkStateExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     networkState($executor, $arguments);
 
@@ -66,7 +43,7 @@ test('it runs the command of each object', function (array $arguments, string $c
 ]);
 
 test('it rejects a device that is not a plain interface name', function () {
-    $executor = fakeNetworkStateExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => networkState($executor, ['object' => 'neighbours', 'device' => 'eth1; reboot']))
         ->toThrow(ValidationException::class);
@@ -74,7 +51,7 @@ test('it rejects a device that is not a plain interface name', function () {
 });
 
 test('it rejects an unknown object', function () {
-    $executor = fakeNetworkStateExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => networkState($executor, ['object' => 'links']))
         ->toThrow(ValidationException::class);
@@ -82,14 +59,14 @@ test('it rejects an unknown object', function () {
 });
 
 test('it reports an unknown device as an error', function () {
-    $result = networkState(fakeNetworkStateExecutor(new CommandResult("Cannot find device \"nosuch\"\n", '', 1)), ['object' => 'neighbours', 'device' => 'nosuch']);
+    $result = networkState(new FakeRemoteExecutor(new CommandResult("Cannot find device \"nosuch\"\n", '', 1)), ['object' => 'neighbours', 'device' => 'nosuch']);
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Cannot find device "nosuch"');
 });
 
 test('it reports a failed call as an error', function () {
-    $result = networkState(fakeNetworkStateExecutor(new RuntimeException('Connection refused.')));
+    $result = networkState(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

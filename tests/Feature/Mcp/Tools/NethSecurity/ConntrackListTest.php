@@ -6,30 +6,7 @@ use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeConntrackListExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -41,7 +18,7 @@ function conntrackList(RemoteExecutor $executor, array $arguments = []): Respons
 }
 
 test('it lists the first 50 entries by default and returns them as text', function () {
-    $executor = fakeConntrackListExecutor(new CommandResult("udp      17 23 src=10.0.1.10 dst=8.8.8.8 sport=57584 dport=53\n1 entries matched\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("udp      17 23 src=10.0.1.10 dst=8.8.8.8 sport=57584 dport=53\n1 entries matched\n"));
 
     $result = conntrackList($executor);
 
@@ -54,7 +31,7 @@ test('it lists the first 50 entries by default and returns them as text', functi
 });
 
 test('it passes the filters to conntrack and keeps only unreplied entries', function () {
-    $executor = fakeConntrackListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     conntrackList($executor, [
         'family' => 'ipv4',
@@ -73,7 +50,7 @@ test('it passes the filters to conntrack and keeps only unreplied entries', func
 });
 
 test('it counts the entries per value and returns the top ones', function () {
-    $executor = fakeConntrackListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     conntrackList($executor, [
         'protocol' => 'tcp',
@@ -88,7 +65,7 @@ test('it counts the entries per value and returns the top ones', function () {
 });
 
 test('it rejects an address that tries to break out of the shell', function () {
-    $executor = fakeConntrackListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => conntrackList($executor, ['src' => '10.0.1.10; reboot']))
         ->toThrow(ValidationException::class);
@@ -96,7 +73,7 @@ test('it rejects an address that tries to break out of the shell', function () {
 });
 
 test('it rejects a port without a protocol that has ports', function (array $arguments) {
-    $executor = fakeConntrackListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => conntrackList($executor, $arguments))
         ->toThrow(ValidationException::class);
@@ -107,7 +84,7 @@ test('it rejects a port without a protocol that has ports', function (array $arg
 ]);
 
 test('it rejects a state without the tcp protocol', function () {
-    $executor = fakeConntrackListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => conntrackList($executor, ['protocol' => 'udp', 'state' => 'ESTABLISHED']))
         ->toThrow(ValidationException::class);
@@ -115,7 +92,7 @@ test('it rejects a state without the tcp protocol', function () {
 });
 
 test('it rejects an unknown group', function () {
-    $executor = fakeConntrackListExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => conntrackList($executor, ['group_by' => 'mark']))
         ->toThrow(ValidationException::class);
@@ -123,7 +100,7 @@ test('it rejects an unknown group', function () {
 });
 
 test('it reports a conntrack failure as an error', function () {
-    $result = conntrackList(fakeConntrackListExecutor(new CommandResult(
+    $result = conntrackList(new FakeRemoteExecutor(new CommandResult(
         "0 entries matched\n",
         "conntrack v1.4.8 (conntrack-tools): unknown option `--dport'\n",
         2,
@@ -134,7 +111,7 @@ test('it reports a conntrack failure as an error', function () {
 });
 
 test('it reports a failed call as an error', function () {
-    $result = conntrackList(fakeConntrackListExecutor(new RuntimeException('Connection refused.')));
+    $result = conntrackList(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

@@ -7,23 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-
-function fakeTcpProbeExecutor(CommandResult $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithCommand = $command;
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -35,7 +19,7 @@ function tcpProbe(RemoteExecutor $executor, array $arguments): Response|Response
 }
 
 test('it connects to the port and reports it reachable', function () {
-    $executor = fakeTcpProbeExecutor(new CommandResult("one.one.one.one [1.1.1.1] 443 (https) open\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("one.one.one.one [1.1.1.1] 443 (https) open\n"));
 
     $result = tcpProbe($executor, ['target' => '1.1.1.1', 'port' => 443]);
 
@@ -45,14 +29,14 @@ test('it connects to the port and reports it reachable', function () {
 });
 
 test('it reports a timed out connection as unreachable rather than as an error', function () {
-    $result = tcpProbe(fakeTcpProbeExecutor(new CommandResult("one.one.one.one [1.1.1.1] 81: Operation timed out\n", exitCode: 1)), ['target' => '1.1.1.1', 'port' => 81]);
+    $result = tcpProbe(new FakeRemoteExecutor(new CommandResult("one.one.one.one [1.1.1.1] 81: Operation timed out\n", exitCode: 1)), ['target' => '1.1.1.1', 'port' => 81]);
 
     expect($result)->toBeInstanceOf(ResponseFactory::class);
     expect($result->getStructuredContent())->toBe(['reachable' => false, 'exit_code' => 1, 'output' => "one.one.one.one [1.1.1.1] 81: Operation timed out\n"]);
 });
 
 test('it connects from the given source address', function () {
-    $executor = fakeTcpProbeExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     tcpProbe($executor, ['target' => 'one.one.one.one', 'port' => 443, 'source_ip' => '10.0.1.1']);
 
@@ -60,7 +44,7 @@ test('it connects from the given source address', function () {
 });
 
 test('it rejects an invalid port', function (array $arguments) {
-    $executor = fakeTcpProbeExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => tcpProbe($executor, ['target' => '1.1.1.1', ...$arguments]))->toThrow(ValidationException::class);
     expect($executor->calledWithCommand)->toBeNull();

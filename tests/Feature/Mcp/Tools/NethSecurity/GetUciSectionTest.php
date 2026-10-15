@@ -3,28 +3,11 @@
 use App\Contracts\RemoteExecutor;
 use App\Mcp\Tools\NethSecurity\GetUciSection;
 use App\Services\Privacy\SecretMasker;
-use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-
-function fakeGetUciSectionExecutor(string $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private string $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithCommand = $command;
-
-            return new CommandResult($this->result);
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -36,7 +19,7 @@ function getUciSection(RemoteExecutor $executor, array $arguments): Response|Res
 }
 
 test('it returns the section with secrets masked', function () {
-    $executor = fakeGetUciSectionExecutor('{"values":{".type":"user","name":"admin","password":"$6$hash","openvpn_ipaddr":["10.0.0.2"]}}');
+    $executor = new FakeRemoteExecutor('{"values":{".type":"user","name":"admin","password":"$6$hash","openvpn_ipaddr":["10.0.0.2"]}}');
 
     $result = getUciSection($executor, ['config' => 'users', 'section' => '@user[0]']);
 
@@ -51,7 +34,7 @@ test('it returns the section with secrets masked', function () {
 });
 
 test('it rejects invalid arguments', function (array $arguments) {
-    expect(fn () => getUciSection(fakeGetUciSectionExecutor('{}'), $arguments))
+    expect(fn () => getUciSection(new FakeRemoteExecutor('{}'), $arguments))
         ->toThrow(ValidationException::class);
 })->with([
     'missing section' => [['config' => 'network']],

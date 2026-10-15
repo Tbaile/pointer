@@ -8,30 +8,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-
-function fakeMwan3StatusExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -43,7 +20,7 @@ function mwan3Status(RemoteExecutor $executor, array $arguments = []): Response|
 }
 
 test('it reads the interfaces section by default', function () {
-    $executor = fakeMwan3StatusExecutor(new CommandResult('{"interfaces":{"wan":{"status":"offline","up":true,"track_ip":[{"ip":"8.8.8.8","status":"down","latency":0,"packetloss":100}]}}}'));
+    $executor = new FakeRemoteExecutor(new CommandResult('{"interfaces":{"wan":{"status":"offline","up":true,"track_ip":[{"ip":"8.8.8.8","status":"down","latency":0,"packetloss":100}]}}}'));
 
     $result = mwan3Status($executor);
 
@@ -56,7 +33,7 @@ test('it reads the interfaces section by default', function () {
 });
 
 test('it reads the policies section', function () {
-    $executor = fakeMwan3StatusExecutor(new CommandResult('{"policies":{"ipv4":{},"ipv6":{}}}'));
+    $executor = new FakeRemoteExecutor(new CommandResult('{"policies":{"ipv4":{},"ipv6":{}}}'));
 
     mwan3Status($executor, ['section' => 'policies']);
 
@@ -64,7 +41,7 @@ test('it reads the policies section', function () {
 });
 
 test('it rejects an unknown section', function () {
-    $executor = fakeMwan3StatusExecutor(new CommandResult('{}'));
+    $executor = new FakeRemoteExecutor(new CommandResult('{}'));
 
     expect(fn () => mwan3Status($executor, ['section' => 'connected']))
         ->toThrow(ValidationException::class);
@@ -72,7 +49,7 @@ test('it rejects an unknown section', function () {
 });
 
 test('it reports a failed call as an error', function () {
-    $result = mwan3Status(fakeMwan3StatusExecutor(new RuntimeException('Connection refused.')));
+    $result = mwan3Status(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

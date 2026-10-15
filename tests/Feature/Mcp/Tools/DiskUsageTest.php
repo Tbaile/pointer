@@ -6,30 +6,7 @@ use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeDiskUsageExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -42,7 +19,7 @@ function diskUsage(RemoteExecutor $executor, array $arguments = []): Response
 
 test('it lists every filesystem without the container mounts', function () {
     $output = "Filesystem           Type       1024-blocks    Used Available Capacity Mounted on\ntmpfs                tmpfs        1972208     27716   1944492   1% /tmp\n";
-    $executor = fakeDiskUsageExecutor(new CommandResult($output));
+    $executor = new FakeRemoteExecutor(new CommandResult($output));
 
     $result = diskUsage($executor);
 
@@ -53,7 +30,7 @@ test('it lists every filesystem without the container mounts', function () {
 });
 
 test('it filters by type and path', function () {
-    $executor = fakeDiskUsageExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     diskUsage($executor, ['type' => 'tmpfs', 'path' => '/var/log']);
 
@@ -61,14 +38,14 @@ test('it filters by type and path', function () {
 });
 
 test('it reports a missing path as an error', function () {
-    $result = diskUsage(fakeDiskUsageExecutor(new CommandResult("Filesystem 1024-blocks Used Available Capacity Mounted on\n", 'df: /nope: can\'t find mount point', 1)), ['path' => '/nope']);
+    $result = diskUsage(new FakeRemoteExecutor(new CommandResult("Filesystem 1024-blocks Used Available Capacity Mounted on\n", 'df: /nope: can\'t find mount point', 1)), ['path' => '/nope']);
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('df: /nope: can\'t find mount point');
 });
 
 test('it rejects a relative path', function () {
-    $executor = fakeDiskUsageExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => diskUsage($executor, ['path' => 'tmp']))
         ->toThrow(ValidationException::class);
@@ -76,7 +53,7 @@ test('it rejects a relative path', function () {
 });
 
 test('it rejects a path that tries to break out of the shell', function () {
-    $executor = fakeDiskUsageExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => diskUsage($executor, ['path' => "/tmp'; reboot"]))
         ->toThrow(ValidationException::class);
@@ -84,7 +61,7 @@ test('it rejects a path that tries to break out of the shell', function () {
 });
 
 test('it reports a failed call as an error', function () {
-    $result = diskUsage(fakeDiskUsageExecutor(new RuntimeException('Connection refused.')));
+    $result = diskUsage(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

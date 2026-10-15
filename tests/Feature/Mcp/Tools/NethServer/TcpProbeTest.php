@@ -7,23 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-
-function fakeNs8TcpProbeExecutor(CommandResult $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithCommand = $command;
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -35,7 +19,7 @@ function ns8TcpProbe(RemoteExecutor $executor, array $arguments): Response|Respo
 }
 
 test('it connects to the port through bash and reports it reachable', function () {
-    $executor = fakeNs8TcpProbeExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     $result = ns8TcpProbe($executor, ['target' => '1.1.1.1', 'port' => 443]);
 
@@ -45,7 +29,7 @@ test('it connects to the port through bash and reports it reachable', function (
 });
 
 test('it reports refused and timed out connections as unreachable', function (CommandResult $commandResult) {
-    $result = ns8TcpProbe(fakeNs8TcpProbeExecutor($commandResult), ['target' => '127.0.0.1', 'port' => 1]);
+    $result = ns8TcpProbe(new FakeRemoteExecutor($commandResult), ['target' => '127.0.0.1', 'port' => 1]);
 
     expect($result->getStructuredContent())->toBe(['reachable' => false, 'exit_code' => $commandResult->exitCode, 'output' => $commandResult->output]);
 })->with([
@@ -54,7 +38,7 @@ test('it reports refused and timed out connections as unreachable', function (Co
 ]);
 
 test('it rejects unsafe input without running anything', function (array $arguments) {
-    $executor = fakeNs8TcpProbeExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => ns8TcpProbe($executor, $arguments))->toThrow(ValidationException::class);
     expect($executor->calledWithCommand)->toBeNull();

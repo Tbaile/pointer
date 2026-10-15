@@ -6,30 +6,7 @@ use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeHaStatusExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -41,7 +18,7 @@ function haStatus(RemoteExecutor $executor, array $arguments = []): Response
 }
 
 test('it reads the status by default with the colors stripped', function () {
-    $executor = fakeHaStatusExecutor(new CommandResult("Status: \e[32menabled\e[0m\nRole: \e[34mbackup\e[0m\nCurrent State: \e[94mmaster\e[0m\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("Status: \e[32menabled\e[0m\nRole: \e[34mbackup\e[0m\nCurrent State: \e[94mmaster\e[0m\n"));
 
     $result = haStatus($executor);
 
@@ -52,7 +29,7 @@ test('it reads the status by default with the colors stripped', function () {
 });
 
 test('it reads the HA configuration', function () {
-    $executor = fakeHaStatusExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     haStatus($executor, ['action' => 'show-config']);
 
@@ -60,21 +37,21 @@ test('it reads the HA configuration', function () {
 });
 
 test('it rejects actions that are not read-only', function () {
-    $executor = fakeHaStatusExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => haStatus($executor, ['action' => 'reset']))->toThrow(ValidationException::class);
     expect($executor->calledWithCommand)->toBeNull();
 });
 
 test('it reports a failed ns-ha-config as an error', function () {
-    $result = haStatus(fakeHaStatusExecutor(new CommandResult("sh: ns-ha-config: not found\n", '', 127)));
+    $result = haStatus(new FakeRemoteExecutor(new CommandResult("sh: ns-ha-config: not found\n", '', 127)));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('sh: ns-ha-config: not found');
 });
 
 test('it reports a failed call as an error', function () {
-    $result = haStatus(fakeHaStatusExecutor(new RuntimeException('Connection refused.')));
+    $result = haStatus(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

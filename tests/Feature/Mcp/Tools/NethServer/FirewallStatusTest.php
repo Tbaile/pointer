@@ -6,30 +6,7 @@ use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeFirewallStatusExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -41,7 +18,7 @@ function firewallStatus(RemoteExecutor $executor, array $arguments = []): Respon
 }
 
 test('it lists every zone by default', function () {
-    $executor = fakeFirewallStatusExecutor(new CommandResult("public (active)\n  target: default\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("public (active)\n  target: default\n"));
 
     $result = firewallStatus($executor);
 
@@ -52,7 +29,7 @@ test('it lists every zone by default', function () {
 });
 
 test('it lists one zone', function () {
-    $executor = fakeFirewallStatusExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     firewallStatus($executor, ['zone' => 'public']);
 
@@ -60,7 +37,7 @@ test('it lists one zone', function () {
 });
 
 test('it shows the ports of a service', function () {
-    $executor = fakeFirewallStatusExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     firewallStatus($executor, ['service' => 'nethsecurity-controller1']);
 
@@ -68,7 +45,7 @@ test('it shows the ports of a service', function () {
 });
 
 test('it rejects a zone and a service together', function () {
-    $executor = fakeFirewallStatusExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => firewallStatus($executor, ['zone' => 'public', 'service' => 'ssh']))
         ->toThrow(ValidationException::class);
@@ -76,7 +53,7 @@ test('it rejects a zone and a service together', function () {
 });
 
 test('it rejects a name that is not a plain id', function () {
-    $executor = fakeFirewallStatusExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => firewallStatus($executor, ['zone' => 'public --remove-service=ssh']))
         ->toThrow(ValidationException::class);
@@ -84,14 +61,14 @@ test('it rejects a name that is not a plain id', function () {
 });
 
 test('it reports an unknown zone as an error', function () {
-    $result = firewallStatus(fakeFirewallStatusExecutor(new CommandResult("Error: INVALID_ZONE: nosuch\n", '', 112)), ['zone' => 'nosuch']);
+    $result = firewallStatus(new FakeRemoteExecutor(new CommandResult("Error: INVALID_ZONE: nosuch\n", '', 112)), ['zone' => 'nosuch']);
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Error: INVALID_ZONE: nosuch');
 });
 
 test('it reports a failed call as an error', function () {
-    $result = firewallStatus(fakeFirewallStatusExecutor(new RuntimeException('Connection refused.')));
+    $result = firewallStatus(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

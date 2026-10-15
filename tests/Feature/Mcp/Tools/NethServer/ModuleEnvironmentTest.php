@@ -6,30 +6,7 @@ use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-
-function fakeModuleEnvironmentExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -41,7 +18,7 @@ function moduleEnvironment(RemoteExecutor $executor, array $arguments): Response
 }
 
 test('it reads only the environment state file of the module', function () {
-    $executor = fakeModuleEnvironmentExecutor(new CommandResult("MODULE_ID=webtop3\nNODE_ID=1\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("MODULE_ID=webtop3\nNODE_ID=1\n"));
 
     $result = moduleEnvironment($executor, ['name' => 'webtop3']);
 
@@ -52,7 +29,7 @@ test('it reads only the environment state file of the module', function () {
 });
 
 test('it rejects a name that is not a plain id', function () {
-    $executor = fakeModuleEnvironmentExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => moduleEnvironment($executor, ['name' => 'webtop3 cat secret.env']))
         ->toThrow(ValidationException::class);
@@ -61,7 +38,7 @@ test('it rejects a name that is not a plain id', function () {
 
 test('it reports a module that is not on this node as an error', function () {
     $result = moduleEnvironment(
-        fakeModuleEnvironmentExecutor(new CommandResult("runagent: [FATAL] Cannot find module webtop3 in the local node\n", '', 1)),
+        new FakeRemoteExecutor(new CommandResult("runagent: [FATAL] Cannot find module webtop3 in the local node\n", '', 1)),
         ['name' => 'webtop3'],
     );
 
@@ -70,7 +47,7 @@ test('it reports a module that is not on this node as an error', function () {
 });
 
 test('it reports a failed call as an error', function () {
-    $result = moduleEnvironment(fakeModuleEnvironmentExecutor(new RuntimeException('Connection refused.')), ['name' => 'webtop3']);
+    $result = moduleEnvironment(new FakeRemoteExecutor(new RuntimeException('Connection refused.')), ['name' => 'webtop3']);
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');

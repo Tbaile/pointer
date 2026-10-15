@@ -7,30 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-
-function fakeStartNodeSupportExecutor(CommandResult|Throwable $result): RemoteExecutor
-{
-    return new class($result) implements RemoteExecutor
-    {
-        public ?string $calledWithMachineUuid = null;
-
-        public ?string $calledWithCommand = null;
-
-        public function __construct(private CommandResult|Throwable $result) {}
-
-        public function run(string $machineUuid, string $command): CommandResult
-        {
-            $this->calledWithMachineUuid = $machineUuid;
-            $this->calledWithCommand = $command;
-
-            if ($this->result instanceof Throwable) {
-                throw $this->result;
-            }
-
-            return $this->result;
-        }
-    };
-}
+use Tests\Fakes\FakeRemoteExecutor;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -42,7 +19,7 @@ function startNodeSupport(RemoteExecutor $executor, array $arguments): Response|
 }
 
 test('it starts the support session of the node and returns its session id', function () {
-    $executor = fakeStartNodeSupportExecutor(new CommandResult("{\"session_id\": \"811630de-67f4-5b6d-8b2f-7cc01f592b1b\"}\n"));
+    $executor = new FakeRemoteExecutor(new CommandResult("{\"session_id\": \"811630de-67f4-5b6d-8b2f-7cc01f592b1b\"}\n"));
 
     $result = startNodeSupport($executor, ['node' => 2]);
 
@@ -53,13 +30,13 @@ test('it starts the support session of the node and returns its session id', fun
 });
 
 test('it requires user interaction', function () {
-    $tool = new StartNodeSupport(fakeStartNodeSupportExecutor(new CommandResult('')));
+    $tool = new StartNodeSupport(new FakeRemoteExecutor(new CommandResult('')));
 
     expect($tool->toArray()['_meta'] ?? null)->toBe(['anthropic/requiresUserInteraction' => true]);
 });
 
 test('it rejects a node that is not a positive integer', function (mixed $node) {
-    $executor = fakeStartNodeSupportExecutor(new CommandResult(''));
+    $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     expect(fn () => startNodeSupport($executor, ['node' => $node]))
         ->toThrow(ValidationException::class);
@@ -68,7 +45,7 @@ test('it rejects a node that is not a positive integer', function (mixed $node) 
 
 test('it reports an unknown node as an error', function () {
     $result = startNodeSupport(
-        fakeStartNodeSupportExecutor(new CommandResult("TaskSubmissionCheckFailed: Client \"node/9\" was not found\n", '', 1)),
+        new FakeRemoteExecutor(new CommandResult("TaskSubmissionCheckFailed: Client \"node/9\" was not found\n", '', 1)),
         ['node' => 9],
     );
 
@@ -77,7 +54,7 @@ test('it reports an unknown node as an error', function () {
 });
 
 test('it reports a failed call as an error', function () {
-    $result = startNodeSupport(fakeStartNodeSupportExecutor(new RuntimeException('Connection refused.')), ['node' => 2]);
+    $result = startNodeSupport(new FakeRemoteExecutor(new RuntimeException('Connection refused.')), ['node' => 2]);
 
     expect($result->isError())->toBeTrue();
     expect((string) $result->content())->toBe('Connection refused.');
