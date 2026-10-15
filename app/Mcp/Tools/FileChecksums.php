@@ -47,7 +47,7 @@ class FileChecksums extends Tool
         ]);
 
         try {
-            $result = $this->executor->run($validated['sos_id'], $this->buildCommand($validated));
+            $result = $this->executor->run($validated['sos_id'], $this->command($validated));
         } catch (Throwable $exception) {
             return Response::error($exception->getMessage());
         }
@@ -60,14 +60,14 @@ class FileChecksums extends Tool
     }
 
     /**
-     * @param  array<string, mixed>  $input
+     * @param  array<string, mixed>  $validated
      */
-    private function buildCommand(array $input): string
+    private function command(array $validated): string
     {
-        $paths = implode(' ', array_map(escapeshellarg(...), $input['paths']));
-        $hash = ($input['algorithm'] ?? 'md5').'sum';
+        $paths = implode(' ', array_map(escapeshellarg(...), $validated['paths']));
+        $hash = ($validated['algorithm'] ?? 'md5').'sum';
 
-        if ($input['aggregate'] ?? false) {
+        if ($validated['aggregate'] ?? false) {
             return "find {$paths} -xdev -type f -exec {$hash} {} + | LC_ALL=C sort -k2 | {$hash}";
         }
 
