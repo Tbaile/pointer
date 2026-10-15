@@ -8,6 +8,7 @@ use App\Mcp\Tools\KernelCounters;
 use App\Mcp\Tools\ListPlaybookTags;
 use App\Mcp\Tools\NethSecurity\ArpProbe;
 use App\Mcp\Tools\NethSecurity\ConntrackList;
+use App\Mcp\Tools\NethSecurity\DnsLookup as NsecDnsLookup;
 use App\Mcp\Tools\NethSecurity\GetUciConfig;
 use App\Mcp\Tools\NethSecurity\GetUciSection;
 use App\Mcp\Tools\NethSecurity\HaStatus;
@@ -22,13 +23,20 @@ use App\Mcp\Tools\NethSecurity\TcpProbe;
 use App\Mcp\Tools\NethSecurity\Traceroute;
 use App\Mcp\Tools\NethSecurity\VictoriaQuery;
 use App\Mcp\Tools\NethSecurity\WireguardStatus;
+use App\Mcp\Tools\NethServer\AuditLog;
+use App\Mcp\Tools\NethServer\ClusterAction;
+use App\Mcp\Tools\NethServer\DnsLookup as Ns8DnsLookup;
 use App\Mcp\Tools\NethServer\FirewallStatus;
+use App\Mcp\Tools\NethServer\HttpProbe;
 use App\Mcp\Tools\NethServer\ListModules;
 use App\Mcp\Tools\NethServer\ModuleContainers;
 use App\Mcp\Tools\NethServer\ModuleEnvironment;
+use App\Mcp\Tools\NethServer\Ping as Ns8Ping;
 use App\Mcp\Tools\NethServer\ReadLogs;
 use App\Mcp\Tools\NethServer\StartNodeSupport;
 use App\Mcp\Tools\NethServer\StopNodeSupport;
+use App\Mcp\Tools\NethServer\TcpProbe as Ns8TcpProbe;
+use App\Mcp\Tools\NethServer\Tracepath;
 use App\Mcp\Tools\NetworkState;
 use App\Mcp\Tools\ProcessList;
 use App\Mcp\Tools\ProposePlaybookChange;
@@ -70,6 +78,7 @@ class PointerServer extends Server
         Ping::class,
         Traceroute::class,
         TcpProbe::class,
+        NsecDnsLookup::class,
         ReadSystemLog::class,
         ServiceStatus::class,
         NftList::class,
@@ -86,6 +95,13 @@ class PointerServer extends Server
         ModuleContainers::class,
         ModuleEnvironment::class,
         FirewallStatus::class,
+        ClusterAction::class,
+        AuditLog::class,
+        Ns8Ping::class,
+        Tracepath::class,
+        Ns8TcpProbe::class,
+        Ns8DnsLookup::class,
+        HttpProbe::class,
         NetworkState::class,
         StartNodeSupport::class,
         StopNodeSupport::class,

@@ -5,17 +5,19 @@ namespace App\Mcp\Tools\NethSecurity;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Laravel\Mcp\Server\Attributes\Description;
+use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Attributes\Title;
 use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
-#[Title('Ping')]
+#[Name('nsec-ping')]
+#[Title('NethSecurity Ping')]
 #[IsReadOnly]
 #[IsOpenWorld(false)]
 #[Description(<<<'DESCRIPTION'
     Send ICMP echo requests from a NethSecurity firewall to a target, to confirm live reachability rather than infer it from configuration.
     `reachable` is true when at least one reply came back; `output` has the per-packet replies and the loss/rtt summary, or the reason no packet was sent (e.g. the name does not resolve).
-    A host may drop ICMP while serving TCP: confirm a negative with TcpProbe on a port it should serve, and locate where packets stop with Traceroute.
+    A host may drop ICMP while serving TCP: confirm a negative with `nsec-tcp-probe` on a port it should serve, and locate where packets stop with `nsec-traceroute`.
     To find the path MTU, send `size` with `dont_fragment` and lower it until replies come back: `size` 1472 fills a 1500-byte IPv4 packet; too large fails with `Message too large` locally or `Frag needed` from a hop.
     DESCRIPTION)]
 class Ping extends NetworkProbeTool

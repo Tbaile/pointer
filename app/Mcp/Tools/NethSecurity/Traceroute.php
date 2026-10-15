@@ -5,11 +5,13 @@ namespace App\Mcp\Tools\NethSecurity;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Laravel\Mcp\Server\Attributes\Description;
+use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Attributes\Title;
 use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
-#[Title('Traceroute')]
+#[Name('nsec-traceroute')]
+#[Title('NethSecurity Traceroute')]
 #[IsReadOnly]
 #[IsOpenWorld(false)]
 #[Description(<<<'DESCRIPTION'
