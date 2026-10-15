@@ -4,6 +4,7 @@ namespace App\Mcp\Servers;
 
 use App\Mcp\Prompts\PointerPrompt;
 use App\Mcp\Tools\DiskUsage;
+use App\Mcp\Tools\FileChecksums;
 use App\Mcp\Tools\KernelCounters;
 use App\Mcp\Tools\ListPlaybookTags;
 use App\Mcp\Tools\NethSecurity\ArpProbe;
@@ -89,6 +90,7 @@ class PointerServer extends Server
         ArpProbe::class,
         ProcessList::class,
         DiskUsage::class,
+        FileChecksums::class,
         KernelCounters::class,
         ReadLogs::class,
         ListModules::class,
