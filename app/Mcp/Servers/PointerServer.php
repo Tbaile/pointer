@@ -7,6 +7,7 @@ use App\Mcp\Tools\DiskUsage;
 use App\Mcp\Tools\FileChecksums;
 use App\Mcp\Tools\KernelCounters;
 use App\Mcp\Tools\ListPlaybookTags;
+use App\Mcp\Tools\NethSecurity\Apk;
 use App\Mcp\Tools\NethSecurity\ArpProbe;
 use App\Mcp\Tools\NethSecurity\ConntrackList;
 use App\Mcp\Tools\NethSecurity\DnsLookup as NsecDnsLookup;
@@ -83,6 +84,7 @@ class PointerServer extends Server
         ReadSystemLog::class,
         ServiceStatus::class,
         NftList::class,
+        Apk::class,
         ConntrackList::class,
         HaStatus::class,
         Mwan3Status::class,
