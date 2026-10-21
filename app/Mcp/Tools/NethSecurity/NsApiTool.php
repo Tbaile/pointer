@@ -13,7 +13,7 @@ use Laravel\Mcp\Server\Tool;
 use Throwable;
 
 /**
- * Tool backed by a single ns-api call, returned as structured content with its secrets masked.
+ * Tool backed by a single ns-api call, returned as structured content with its secrets and URL passwords masked.
  */
 abstract class NsApiTool extends Tool
 {
@@ -67,7 +67,7 @@ abstract class NsApiTool extends Tool
             return Response::error('ubus did not return a JSON object.');
         }
 
-        return Response::structured($this->masker->mask($decoded, $this->maskedFields));
+        return Response::structured($this->masker->maskUrlCredentials($this->masker->mask($decoded, $this->maskedFields)));
     }
 
     /**

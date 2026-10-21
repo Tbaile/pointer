@@ -24,14 +24,17 @@ use Throwable;
 #[IsOpenWorld(false)]
 #[Description(<<<'DESCRIPTION'
     Run a shell command directly on the target machine, as a privileged user. This is a full-fledged command on a customer's production machine: there is no sandbox, and anything it changes is changed for real.
-    Use it only as a last resort, when no other tool can answer. Call `search-tool-requests` first, then `upvote-tool-request` on the request for the capability you are missing, or `request-tool` when there is none, and pass that request's id as `tool_request_id`.
+    Use it only as a last resort, when no other tool can answer. Call `search-tool-requests` first, then `upvote-tool-request` on the request for the capability you are missing, or `request-tool` when there is none, and pass that request's id as `tool_request_id`. Each request covers one capability: a command for a different need gets its own request.
 
     Keep the command as simple as possible, so a person can read it at a glance:
     - Fine: one command, optionally piped into a filter, e.g. `logread | grep openvpn`.
     - Not allowed: multi-line scripts, inline interpreter programs (`python -c`, `awk` programs, heredocs), chains of `;` or `&&` doing several things.
+    - Bound the output: filter on a specific pattern and limit the lines, never grep a whole log or directory tree unfiltered.
+    - NethSecurity runs BusyBox: many GNU options are missing.
     - Never write, restart or delete anything unless the user explicitly asked for it.
+    - Never call external services from the machine, and never pass the machine's credentials on the command line.
 
-    The output is returned as is: secrets in it are not masked.
+    The output is returned as is: secrets in it are not masked. Avoid commands that print them, like dumping a container's environment or a VPN private key.
     DESCRIPTION)]
 class RunCommand extends Tool
 {

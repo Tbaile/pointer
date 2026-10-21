@@ -26,6 +26,26 @@ final readonly class SecretMasker
     }
 
     /**
+     * Mask the password of every `scheme://user:password@` URL in the strings of a value, keeping the user.
+     */
+    public function maskUrlCredentials(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            return array_map($this->maskUrlCredentials(...), $value);
+        }
+
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        return preg_replace_callback(
+            '#(://[^/\s:@]+:)([^/\s@]+)@#',
+            fn (array $matches): string => $matches[1].$this->maskValue($matches[2]).'@',
+            $value,
+        );
+    }
+
+    /**
      * @param  list<string>  $segments
      */
     private function maskPath(mixed $value, array $segments): mixed

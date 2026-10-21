@@ -32,6 +32,22 @@ class GetUciConfig extends NsApiTool
         'values.*.secret',
         'values.*.token',
         'values.*.ssh_key',
+        'values.*.legacy_secret',
+        'values.*.ban_remotetoken',
+        'values.*.bind_password',
+        'values.*.openvpn_2fa',
+        'values.*.auth_pass',
+        'values.*.privacy_pass',
+        'values.*.cert_password',
+        'values.*.basic_auth_password',
+        'values.*.oinkcode',
+        'values.*.pincode',
+        'values.*.pppd_options',
+        'values.*.credentials',
+        'values.*.community',
+        'values.*.Community',
+        'values.*.CommunityName',
+        'values.*.trapsess',
     ];
 
     /**

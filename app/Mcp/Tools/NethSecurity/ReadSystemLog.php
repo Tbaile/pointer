@@ -3,6 +3,7 @@
 namespace App\Mcp\Tools\NethSecurity;
 
 use App\Contracts\RemoteExecutor;
+use App\Services\Privacy\SecretMasker;
 use Closure;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
@@ -27,10 +28,14 @@ use Throwable;
     - Match a time window with the timestamp prefix, e.g. `^Oct +9 10:`. Days 1-9 are padded with two spaces.
     - Returns the last `lines` matching lines, 100 by default. Narrow the `pattern` rather than raising `lines`.
     - `source` `memory` (default): the log kept in RAM, lost on reboot. `storage`: the log kept on the data storage for a year, empty when no data storage is configured. Reading it is slower.
+    - Passwords inside URLs (`https://<user>:<password>@...`) are masked.
     DESCRIPTION)]
 class ReadSystemLog extends Tool
 {
-    public function __construct(private readonly RemoteExecutor $executor) {}
+    public function __construct(
+        private readonly RemoteExecutor $executor,
+        private readonly SecretMasker $masker,
+    ) {}
 
     /**
      * Handle the tool request.
@@ -59,7 +64,7 @@ class ReadSystemLog extends Tool
             return Response::error(trim($result->errorOutput ?: $result->output) ?: "Reading the system log exited with code {$result->exitCode}");
         }
 
-        return Response::text($result->output);
+        return Response::text($this->masker->maskUrlCredentials($result->output));
     }
 
     /**

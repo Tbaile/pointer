@@ -2,6 +2,7 @@
 
 use App\Contracts\RemoteExecutor;
 use App\Mcp\Tools\NethSecurity\ReadSystemLog;
+use App\Services\Privacy\SecretMasker;
 use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
@@ -13,7 +14,7 @@ use Tests\Fakes\FakeRemoteExecutor;
  */
 function readSystemLog(RemoteExecutor $executor, array $arguments = []): Response
 {
-    return (new ReadSystemLog($executor))
+    return (new ReadSystemLog($executor, new SecretMasker('test-key')))
         ->handle(new Request(['sos_id' => 'a1b2c3d4-0000-0000-0000-000000000000', ...$arguments]));
 }
 
@@ -26,6 +27,14 @@ test('it tails the memory log by default and returns it as text', function () {
     expect((string) $result->content())->toBe("Oct  9 10:36:22 fw dropbear[13023]: Child connection from 10.0.1.10:55338\n");
     expect($executor->calledWithMachineUuid)->toBe('a1b2c3d4-0000-0000-0000-000000000000');
     expect($executor->calledWithCommand)->toBe("{ zcat /var/log/messages.1.gz; cat /var/log/messages; } 2>/dev/null | tail -n '100'");
+});
+
+test('it masks passwords inside URLs', function () {
+    $executor = new FakeRemoteExecutor(new CommandResult("Aug  2 03:00:01 fw update-packages: Downloading https://NETH-1234:s3cr3t@distfeed.example.com/packages.adb\n"));
+
+    $result = readSystemLog($executor);
+
+    expect((string) $result->content())->toBe('Aug  2 03:00:01 fw update-packages: Downloading https://NETH-1234:[masked:hmac-sha256:'.substr(hash_hmac('sha256', 's3cr3t', 'test-key'), 0, 12)."]@distfeed.example.com/packages.adb\n");
 });
 
 test('it filters the lines with the pattern as a perl regex', function () {

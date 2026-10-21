@@ -33,6 +33,20 @@ test('it returns the devices as structured content with private keys masked', fu
     expect($executor->calledWithCommand)->toBe("ubus -S call 'ns.devices' 'list-devices' '{}'");
 });
 
+test('it masks the password of a PPPoE interface', function () {
+    $executor = new FakeRemoteExecutor('{"all_devices":[{"name":"eth1","iface":{"proto":"pppoe","username":"isp-user","password":"pppSecret"}}]}');
+
+    $result = listDevices($executor);
+
+    expect($result->getStructuredContent())->toBe(['all_devices' => [
+        ['name' => 'eth1', 'iface' => [
+            'proto' => 'pppoe',
+            'username' => 'isp-user',
+            'password' => '[masked:hmac-sha256:'.substr(hash_hmac('sha256', 'pppSecret', 'test-key'), 0, 12).']',
+        ]],
+    ]]);
+});
+
 test('it reports a failed call as an error', function () {
     $result = listDevices(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 

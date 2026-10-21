@@ -17,5 +17,10 @@ class ListDevices extends NsApiTool
 
     protected string $method = 'list-devices';
 
-    protected array $maskedFields = ['all_devices.*.iface.private_key'];
+    protected array $maskedFields = [
+        'all_devices.*.iface.private_key',
+        'all_devices.*.iface.password',
+        'all_devices.*.iface.pincode',
+        'all_devices.*.iface.pppd_options',
+    ];
 }

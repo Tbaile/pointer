@@ -42,6 +42,24 @@ test('it leaves null untouched', function () {
     expect((new SecretMasker('test-key'))->mask(['secret' => null], ['secret']))->toBe(['secret' => null]);
 });
 
+test('it masks the password of URLs inside strings, keeping the user', function () {
+    $masked = (new SecretMasker('test-key'))->maskUrlCredentials([
+        'values' => ['global' => [
+            'ban_allowurl' => ['https://NETH-1234:s3cr3t@bl.example.com/allow.txt'],
+            'ban_feed' => 'https://feeds.example.com/list.txt',
+        ]],
+        'count' => 3,
+    ]);
+
+    expect($masked)->toBe([
+        'values' => ['global' => [
+            'ban_allowurl' => ['https://NETH-1234:'.maskedToken('s3cr3t').'@bl.example.com/allow.txt'],
+            'ban_feed' => 'https://feeds.example.com/list.txt',
+        ]],
+        'count' => 3,
+    ]);
+});
+
 test('it masks every value inside a list field', function () {
     $masked = (new SecretMasker('test-key'))->mask(['keys' => ['one', 'two']], ['keys']);
 

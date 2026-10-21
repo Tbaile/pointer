@@ -39,6 +39,30 @@ test('it returns the configuration with secrets masked', function () {
     expect($executor->calledWithCommand)->toBe("ubus -S call 'uci' 'get' '{\"config\":\"network\"}'");
 });
 
+test('it masks the credentials stored outside the usual secret options', function () {
+    $executor = new FakeRemoteExecutor(json_encode(['values' => [
+        'config' => [
+            'legacy_secret' => 'b2xk',
+            'repository_url' => 'https://NETH-1234:s3cr3t@distfeed.example.com/stable',
+            'system_id' => 'NETH-1234',
+        ],
+        'user' => ['name' => 'alice', 'openvpn_2fa' => 'JBSWY3DPEHPK3PXP'],
+        'public' => ['community' => 'public', 'name' => 'public'],
+    ]]));
+
+    $result = getUciConfig($executor, ['config' => 'ns-plug']);
+
+    expect($result->getStructuredContent())->toBe(['values' => [
+        'config' => [
+            'legacy_secret' => maskedUciValue('b2xk'),
+            'repository_url' => 'https://NETH-1234:'.maskedUciValue('s3cr3t').'@distfeed.example.com/stable',
+            'system_id' => 'NETH-1234',
+        ],
+        'user' => ['name' => 'alice', 'openvpn_2fa' => maskedUciValue('JBSWY3DPEHPK3PXP')],
+        'public' => ['community' => maskedUciValue('public'), 'name' => 'public'],
+    ]]);
+});
+
 test('it filters sections by type and matching options', function () {
     $executor = new FakeRemoteExecutor('{"values":{}}');
 
