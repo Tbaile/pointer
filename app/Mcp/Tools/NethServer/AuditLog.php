@@ -97,7 +97,7 @@ class AuditLog extends Tool
                 return Response::error(trim($result->output));
             }
 
-            $data = is_array($entry['data']) ? $this->maskSecrets($entry['data']) : $entry['data'];
+            $data = is_array($entry['data']) ? $this->masker->maskSecretKeys($entry['data']) : $entry['data'];
 
             $lines[] = implode("\t", [$entry['timestamp'], $entry['user'], $entry['event'], $entry['task'] ?? '-', $entry['queue'] ?? '-', json_encode($data, JSON_UNESCAPED_SLASHES)]);
         }
@@ -107,25 +107,6 @@ class AuditLog extends Tool
         }
 
         return Response::text("TIMESTAMP\tUSER\tEVENT\tTASK\tQUEUE\tDATA\n".implode("\n", $lines)."\n");
-    }
-
-    /**
-     * Mask the values of every key that looks like a secret, at any depth.
-     *
-     * @param  array<mixed>  $data
-     * @return array<mixed>
-     */
-    private function maskSecrets(array $data): array
-    {
-        foreach ($data as $key => $value) {
-            if (is_string($key) && preg_match('/pass|secret|token|key|code|jwt|credential/i', $key) === 1) {
-                $data[$key] = $this->masker->mask(['value' => $value], ['value'])['value'];
-            } elseif (is_array($value)) {
-                $data[$key] = $this->maskSecrets($value);
-            }
-        }
-
-        return $data;
     }
 
     /**

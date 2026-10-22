@@ -60,6 +60,20 @@ test('it masks the password of URLs inside strings, keeping the user', function 
     ]);
 });
 
+test('it masks the values of keys that look like secrets, at any depth', function () {
+    $masked = (new SecretMasker('test-key'))->maskSecretKeys([
+        'api_password' => 's3cret',
+        'host' => 'app.example.org',
+        'certificates' => [['cert' => 'LS0t', 'key' => 'private']],
+    ]);
+
+    expect($masked)->toBe([
+        'api_password' => maskedToken('s3cret'),
+        'host' => 'app.example.org',
+        'certificates' => [['cert' => 'LS0t', 'key' => maskedToken('private')]],
+    ]);
+});
+
 test('it masks every value inside a list field', function () {
     $masked = (new SecretMasker('test-key'))->mask(['keys' => ['one', 'two']], ['keys']);
 

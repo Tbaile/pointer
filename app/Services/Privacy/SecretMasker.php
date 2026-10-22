@@ -26,6 +26,25 @@ final readonly class SecretMasker
     }
 
     /**
+     * Mask the values of every key that looks like a secret, at any depth.
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     */
+    public function maskSecretKeys(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_string($key) && preg_match('/pass|secret|token|key|code|jwt|credential/i', $key) === 1) {
+                $data[$key] = $this->maskValue($value);
+            } elseif (is_array($value)) {
+                $data[$key] = $this->maskSecretKeys($value);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
      * Mask the password of every `scheme://user:password@` URL in the strings of a value, keeping the user.
      */
     public function maskUrlCredentials(mixed $value): mixed

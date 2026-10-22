@@ -25,19 +25,24 @@ use App\Mcp\Tools\NethSecurity\TcpProbe;
 use App\Mcp\Tools\NethSecurity\Traceroute;
 use App\Mcp\Tools\NethSecurity\VictoriaQuery;
 use App\Mcp\Tools\NethSecurity\WireguardStatus;
+use App\Mcp\Tools\NethServer\AsteriskCli;
 use App\Mcp\Tools\NethServer\AuditLog;
 use App\Mcp\Tools\NethServer\ClusterAction;
+use App\Mcp\Tools\NethServer\Crowdsec;
 use App\Mcp\Tools\NethServer\DnsLookup as Ns8DnsLookup;
 use App\Mcp\Tools\NethServer\FirewallStatus;
 use App\Mcp\Tools\NethServer\HttpProbe;
 use App\Mcp\Tools\NethServer\ListModules;
+use App\Mcp\Tools\NethServer\ModuleAction;
 use App\Mcp\Tools\NethServer\ModuleContainers;
 use App\Mcp\Tools\NethServer\ModuleEnvironment;
 use App\Mcp\Tools\NethServer\Ping as Ns8Ping;
 use App\Mcp\Tools\NethServer\ReadLogs;
+use App\Mcp\Tools\NethServer\Rtpengine;
 use App\Mcp\Tools\NethServer\StartNodeSupport;
 use App\Mcp\Tools\NethServer\StopNodeSupport;
 use App\Mcp\Tools\NethServer\TcpProbe as Ns8TcpProbe;
+use App\Mcp\Tools\NethServer\TlsProbe;
 use App\Mcp\Tools\NethServer\Tracepath;
 use App\Mcp\Tools\NetworkState;
 use App\Mcp\Tools\ProcessList;
@@ -99,13 +104,18 @@ class PointerServer extends Server
         ModuleContainers::class,
         ModuleEnvironment::class,
         FirewallStatus::class,
+        Crowdsec::class,
         ClusterAction::class,
+        ModuleAction::class,
+        AsteriskCli::class,
+        Rtpengine::class,
         AuditLog::class,
         Ns8Ping::class,
         Tracepath::class,
         Ns8TcpProbe::class,
         Ns8DnsLookup::class,
         HttpProbe::class,
+        TlsProbe::class,
         NetworkState::class,
         StartNodeSupport::class,
         StopNodeSupport::class,

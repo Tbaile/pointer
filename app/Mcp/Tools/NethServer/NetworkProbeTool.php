@@ -17,7 +17,7 @@ use Throwable;
  */
 abstract class NetworkProbeTool extends Tool
 {
-    private const string HOSTNAME_PATTERN = '/^(?=.{1,253}$)[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.?$/';
+    protected const string HOSTNAME_PATTERN = '/^(?=.{1,253}$)[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.?$/';
 
     public function __construct(protected readonly RemoteExecutor $executor) {}
 
