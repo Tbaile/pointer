@@ -6,6 +6,9 @@ RUN apk add --no-cache openssh-client-default
 
 RUN install-php-extensions intl pcntl pdo_pgsql zip
 
+COPY containers/php/pointer.ini $PHP_INI_DIR/conf.d/pointer.ini
+COPY containers/frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+
 RUN addgroup -g 1000 pointer \
     && adduser -D -u 1000 -G pointer pointer \
     && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp \
