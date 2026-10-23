@@ -1,107 +1,94 @@
 # Pointer
 
-Pointer is a Laravel application that lets an AI agent inspect NethServer and NethSecurity machines. It reaches a target
-only through a support server, which owns the trust relationship with every target and brokers the second hop, and it
-grounds its answers with the product documentation retrieved from kapa.ai.
+Pointer is a Laravel application that serves an MCP server, so an AI agent can inspect NethServer and NethSecurity
+machines. It reaches a target only through a support server, which owns the trust relationship with every target and
+brokers the second hop. Answers are grounded with the product documentation retrieved from kapa.ai and with playbooks,
+which agents record and admins review in the web panel.
 
 ## Prerequisites
 
-| Requirement | Version | Notes |
-| --- | --- | --- |
-| PHP | 8.5 | `composer.json` pins the platform to 8.5. |
-| Composer | 2.x | |
-| Node.js | v24.20.0 | Pinned in `.nvmrc`; `nvm use` picks it up. |
-| npm | 11.x | Ships with Node 24. |
-| SQLite | — | Default database driver; needs the `pdo_sqlite` PHP extension. |
-| `ssh` client | — | Used to reach the support server. |
+Docker with Compose v2. PHP, Node and Postgres all run in containers, nothing else is needed on the host.
 
-The application also expects these external services. Without them it boots, but the agent cannot run.
+The application also expects these external services. Without them it boots, but the tools that reach a target or the
+documentation fail.
 
-- **An OpenAI API key.** `PointerAgent` is pinned to the OpenAI provider and the `gpt-5.6-luna` model.
 - **A support server** reachable over SSH, running the `sancho` session helper, plus a private key that authenticates
   Pointer against it.
-- **kapa.ai credentials** — an API key and a project ID, from *Project > API Keys* in the kapa.ai dashboard.
+- **kapa.ai credentials**: an API key and a project ID, from *Project > API Keys* in the kapa.ai dashboard.
 
 ## Setting up a dev machine
 
 ```bash
 git clone git@github.com:Tbaile/pointer.git
 cd pointer
-nvm use
-composer setup
+cp .env.example .env
 ```
-
-`composer setup` installs the PHP and JS dependencies, copies `.env.example` to `.env`, generates the application key,
-runs the migrations and builds the frontend assets.
-
-### Configure the environment
 
 Edit `.env` and fill in:
 
 ```dotenv
-# Provider credentials for the agent, which runs on OpenAI.
-OPENAI_API_KEY=
-
 # Support server that brokers access to target machines.
 POINTER_SUPPORT_HOST=
 POINTER_SUPPORT_USER=pointer
-POINTER_SUPPORT_IDENTITY_FILE=app/private/pointer
+POINTER_SUPPORT_PORT=
+# Private key, as a multi-line value in double quotes.
+POINTER_SUPPORT_IDENTITY=
 
 # kapa.ai retrieval API.
 KAPA_API_KEY=
 KAPA_PROJECT_ID=
 ```
 
-`POINTER_SUPPORT_IDENTITY_FILE` is resolved against the storage path when relative, so the default points at
-`storage/app/private/pointer`. Put the private key there and give it `0600`.
+Leave `POINTER_SUPPORT_PORT` empty to use the default SSH port. The key is written into the container on every start, so
+there is no key file to place anywhere.
 
-### Seed the admin account
-
-The web UI is behind authentication. `DatabaseSeeder` creates a single administrator from `ADMIN_EMAIL` and
-`ADMIN_PASSWORD` in `.env` (`admin@example.com` / `password` by default):
+Then start everything:
 
 ```bash
-php artisan db:seed
+docker compose up
 ```
+
+The first start builds the image, so it takes a while. The `app` container then installs the dependencies, generates the
+application key and the OAuth keys, runs the migrations and creates the administrator from `ADMIN_EMAIL` and
+`ADMIN_PASSWORD` in `.env` (`admin@example.com` / `password` by default). Next starts skip what is already there. Once
+`app` is healthy it is ready.
+
+| Service | What it does | Where |
+| --- | --- | --- |
+| `app` | The web panel and the MCP server | <http://localhost:8000> |
+| `node` | Vite dev server with hot reload | <http://localhost:5173> |
+| `postgres` | The database, kept in the `postgres-data` volume | not published |
 
 ## Running it
 
-```bash
-composer dev
-```
-
-That runs `php artisan dev`, which starts four processes together: the PHP dev server, the queue listener, the Pail log
-tailer and the Vite dev server. The application is served at <http://localhost:8000>.
-
-To drive the agent from the terminal instead of the browser:
-
-```bash
-# Start a session against a target, by its sancho session id.
-php artisan pointer:agent <sos-id>
-
-# Continue the previous conversation for that system.
-php artisan pointer:agent <sos-id> --continue
-```
+Log in at <http://localhost:8000> with the administrator account. The panel at `/admin` has the playbooks, the users, the
+MCP activity log and an MCP setup page with the steps to connect an agent. The MCP server itself is served at
+`/mcp/pointer`, behind OAuth.
 
 Two commands help verify the external pieces before pointing a model at a machine:
 
 ```bash
 # Check that the support server hop works.
-php artisan pointer:run <uuid> --command="uname -a"
+docker compose exec app php artisan pointer:run <uuid> --command="uname -a"
 
 # Check that documentation retrieval works.
-php artisan kapa:query:nsec "how do I configure a wan failover"
+docker compose exec app php artisan kapa:query:nsec "how do I configure a wan failover"
 ```
+
+`docker compose down` stops everything and keeps the database. Beware, `docker compose down -v` deletes the
+`postgres-data` volume too, and with it every playbook.
 
 ## Checks
 
 ```bash
-composer test          # config clear + Pint + PHPStan + Pest
-composer lint          # fix code style
-composer types:check   # PHPStan only
-npm run format:check   # Prettier on Blade views
-npm run build          # production asset build
+docker compose exec app composer test            # config clear + Pint + PHPStan + Pest
+docker compose exec app composer lint            # fix code style
+docker compose exec app composer types:check     # PHPStan only
+docker compose exec node npm run format:check    # Prettier on Blade views
+docker compose exec node npm run build           # production asset build
 ```
+
+The tests run on their own `pointer_testing` database, so the development data is safe.
 
 CI runs Pint, PHPStan, Prettier and Pest on every push and pull request against `main`.
 

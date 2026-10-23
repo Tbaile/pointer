@@ -16,13 +16,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::firstOrCreate(
-            ['email' => (string) config('admin.email')],
-            [
-                'name' => 'Administrator',
-                'password' => Hash::make((string) config('admin.password')),
-                'is_admin' => true,
-            ],
-        );
+        if (User::where('is_admin', true)->exists()) {
+            return;
+        }
+
+        User::create([
+            'email' => (string) config('admin.email'),
+            'name' => 'Administrator',
+            'password' => Hash::make((string) config('admin.password')),
+            'is_admin' => true,
+        ]);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Playbooks\Tables;
 
 use App\Enums\PlaybookVerdict;
+use App\Enums\ProposalStatus;
 use App\Enums\SystemType;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -19,7 +20,10 @@ class PlaybooksTable
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with('tags')->withCount('pendingProposals'))
             ->defaultSort(fn (Builder $query) => $query
-                ->orderByRaw('case when pending_proposals_count > 0 then 0 else 1 end')
+                ->orderByRaw(
+                    'case when exists (select 1 from playbook_proposals where playbook_proposals.playbook_id = playbooks.id and status = ?) then 0 else 1 end',
+                    [ProposalStatus::Pending->value],
+                )
                 ->orderByRaw('case when verdict is null then 0 else 1 end')
                 ->latest('updated_at'))
             ->columns([

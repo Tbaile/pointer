@@ -50,19 +50,13 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
-      - uses: shivammathur/setup-php@v2
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
         with:
-          coverage: none
-      - uses: ramsey/composer-install@v4
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - name: Prepare environment
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-          php artisan passport:keys
-      - run: php artisan test
+          context: .
+          target: ci
+          tags: pointer:ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - run: docker compose run --rm ci

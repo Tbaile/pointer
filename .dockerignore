@@ -1,0 +1,21 @@
+.git/
+node_modules/
+vendor/
+storage/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Generated files inside the directories that get copied
+bootstrap/cache/*.php
+public/build/
+public/hot
+public/storage
+public/css/filament/
+public/js/filament/
+public/fonts/filament/
+public/fonts-manifest.dev.json
