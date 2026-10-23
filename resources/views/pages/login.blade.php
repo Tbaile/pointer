@@ -1,19 +1,19 @@
 <x-layouts.guest :title="__('Sign in')">
-    <div class="elevation-0 border-secondary w-full max-w-sm rounded-xl border p-8">
-        <h1 class="text-primary-neutral text-2xl font-semibold">{{ __('Sign in') }}</h1>
-        <p class="text-secondary-neutral mt-1 text-sm">{{ __('Enter your credentials to continue.') }}</p>
-
+    <x-card
+        :title="__('Sign in')"
+        :description="__('Enter your credentials to continue.')"
+    >
         <form
             method="POST"
             action="{{ url('/login') }}"
-            class="mt-6 space-y-4"
+            class="mt-8 space-y-6"
         >
             @csrf
 
-            <div class="space-y-1">
+            <div class="space-y-2">
                 <label
                     for="email"
-                    class="text-secondary-neutral block text-sm"
+                    class="text-primary-neutral block text-sm font-medium"
                 >{{ __('Email') }}</label>
                 <input
                     id="email"
@@ -23,14 +23,17 @@
                     required
                     autofocus
                     autocomplete="username"
-                    class="surface-background-input border-secondary text-primary-neutral focus:ring-primary w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2"
+                    class="surface-background-input ring-input text-primary-neutral focus:ring-primary shadow-xs w-full rounded-lg px-3 py-1.5 text-sm ring-1 focus:outline-none focus:ring-2"
                 >
+                @error('email')
+                    <p class="text-danger text-sm">{{ $message }}</p>
+                @enderror
             </div>
 
-            <div class="space-y-1">
+            <div class="space-y-2">
                 <label
                     for="password"
-                    class="text-secondary-neutral block text-sm"
+                    class="text-primary-neutral block text-sm font-medium"
                 >{{ __('Password') }}</label>
                 <input
                     id="password"
@@ -38,33 +41,25 @@
                     name="password"
                     required
                     autocomplete="current-password"
-                    class="surface-background-input border-secondary text-primary-neutral focus:ring-primary w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2"
+                    class="surface-background-input ring-input text-primary-neutral focus:ring-primary shadow-xs w-full rounded-lg px-3 py-1.5 text-sm ring-1 focus:outline-none focus:ring-2"
                 >
+                @error('password')
+                    <p class="text-danger text-sm">{{ $message }}</p>
+                @enderror
             </div>
 
-            <label class="text-secondary-neutral flex items-center gap-2 text-sm">
+            <label class="text-primary-neutral flex items-center gap-3 text-sm">
                 <input
                     type="checkbox"
                     name="remember"
                     value="1"
+                    class="accent-primary-active size-4 rounded"
                     @checked(old('remember'))
                 >
                 {{ __('Remember me') }}
             </label>
 
-            @error('email')
-                <p class="text-danger text-sm">{{ $message }}</p>
-            @enderror
-            @error('password')
-                <p class="text-danger text-sm">{{ $message }}</p>
-            @enderror
-
-            <button
-                type="submit"
-                class="bg-primary-active hover:bg-primary-hover focus:ring-primary w-full rounded-lg px-4 py-2 font-medium text-white focus:outline-none focus:ring-2"
-            >
-                {{ __('Log in') }}
-            </button>
+            <x-button>{{ __('Log in') }}</x-button>
         </form>
-    </div>
+    </x-card>
 </x-layouts.guest>

@@ -1,8 +1,13 @@
-@props(['title', 'description' => null])
-<div {{ $attributes->class('elevation-0 border-secondary w-full max-w-sm rounded-xl border p-8') }}>
-    <h1 class="text-primary-neutral text-2xl font-semibold">{{ $title }}</h1>
+@props(['title', 'description' => null, 'brand' => true])
+<div
+    {{ $attributes->class('elevation-0 ring-secondary w-full max-w-lg rounded-xl px-6 py-12 shadow-xs ring-1 sm:px-12') }}>
+    @if ($brand)
+        <p class="text-primary-neutral mb-4 text-center text-xl font-bold">{{ config('app.name') }}</p>
+    @endif
+
+    <h1 class="text-primary-neutral text-center text-2xl font-bold tracking-tight">{{ $title }}</h1>
     @if ($description)
-        <p class="text-secondary-neutral mt-1 text-sm">{{ $description }}</p>
+        <p class="text-secondary-neutral mt-2 text-center text-sm">{{ $description }}</p>
     @endif
 
     {{ $slot }}
