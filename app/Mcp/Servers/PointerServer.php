@@ -5,6 +5,7 @@ namespace App\Mcp\Servers;
 use App\Mcp\Prompts\PointerPrompt;
 use App\Mcp\Tools\DiskUsage;
 use App\Mcp\Tools\FileChecksums;
+use App\Mcp\Tools\GetPlaybook;
 use App\Mcp\Tools\KernelCounters;
 use App\Mcp\Tools\ListPlaybookTags;
 use App\Mcp\Tools\NethSecurity\Apk;
@@ -68,7 +69,7 @@ use Laravel\Mcp\Server\Attributes\Version;
 #[Instructions(<<<'INSTRUCTIONS'
     This server gives read access to a remote Nethesis machine, identified by its SOS id, to diagnose problems on it. Every command runs on that machine, never on the local computer: do not use local shell, file or web tools for anything about the machine. Tool calls run one at a time.
     Pass the SOS id the user gave as `sos_id` to every tool that takes one. Call `what-is-it` first: its answer is the `system_type` for the other tools and decides which ones apply. The NethSecurity tools only work on `nethsecurity` machines.
-    Call `list-playbook-tags` and `search-playbooks` before investigating, then search the documentation of the product the machine runs: `search-nsec-documentation` for `nethsecurity`, `search-ns8-documentation` for `nethserver`, plus `search-nethvoice-documentation` for NethVoice and telephony problems.
+    Call `list-playbook-tags` and `search-playbooks` before investigating and open the matching ones with `get-playbook`, then search the documentation of the product the machine runs: `search-nsec-documentation` for `nethsecurity`, `search-ns8-documentation` for `nethserver`, plus `search-nethvoice-documentation` for NethVoice and telephony problems.
     When the investigation ends, report to the user first, then ask before saving: upvote the playbooks whose checks helped with `upvote-playbook`, propose a change to one that lacked a useful check with `propose-playbook-change`, or record a new one with `record-playbook`. Save only what the user confirmed or the machine showed.
     When a tool you need is missing, load the full tool list to make sure, then search `search-tool-requests` and either upvote the matching request with `upvote-tool-request` or create one with `request-tool`.
     Only when no other tool can answer, use `run-command` with the tool request for the missing capability; keep the command short and readable.
@@ -124,6 +125,7 @@ class PointerServer extends Server
         SearchNethvoiceDocumentation::class,
         ListPlaybookTags::class,
         SearchPlaybooks::class,
+        GetPlaybook::class,
         RecordPlaybook::class,
         ProposePlaybookChange::class,
         UpvotePlaybook::class,

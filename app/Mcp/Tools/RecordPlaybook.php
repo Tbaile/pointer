@@ -26,22 +26,27 @@ use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
     Record a new playbook. A playbook is either how to diagnose a problem (the checks that helped investigate it) or how to do something on the system that other investigations can reuse (e.g. read the logs of a module, query an app database).
     Call it when the investigation ends, only when no playbook returned by `search-playbooks` covers it; otherwise upvote it with `upvote-playbook` or propose an extension with `propose-playbook-change`. Include only the steps that moved the investigation forward, not the ones that led nowhere. When a step relies on a how-to that already exists as a playbook, refer to it by title instead of restating its commands; when the investigation had to work out a reusable how-to, record it as its own playbook.
 
-    Write `body` in markdown. Suggested layout, adapt the sections to what the playbook is (e.g. `## Purpose` instead of `## Problem` for a how-to):
+    Write `body` in markdown, without repeating the title. A problem playbook is a short decision tree: the checks that tell its causes apart, and the fix for each cause.
 
     ```
-    # <the problem, e.g. DNS resolution not working, or the task, e.g. Read module logs>
-
-    ## Problem
-    <the symptoms, in the user's terms>
+    ## Symptom
+    <what the user sees, in their terms, in one or two lines>
 
     ## Checks
-    - Always: `<tool> {<arguments>}`
-      look for: <what a bad result looks like>
-    - If <condition, e.g. the adblock service is active>: `<command>`
-      look for: <what a bad result looks like>
+    1. `<tool> {<arguments>}`
+       - <result> → <cause>
+       - <result> → step 3
+    2. `<tool> {<arguments>}`
+       - <result> → <cause>
+
+    ## Fix
+    - <cause>: <what to do>
     ```
 
-    Each step names the tool and its arguments (without the SOS id), or the command run with `run-command`. Say what to look for, not what this machine showed.
+    A how-to has a `## Steps` list instead: the calls to make, in order, and how to read their output.
+
+    Each check names the tool and its arguments (without the SOS id), or the command run with `run-command`, and the results that point to a cause or to the next step. Leave out checks whose result would not change the next step.
+    Write only what a machine showed or the user confirmed, never guesses or what this particular case looked like. Don't explain how a tool behaves or fails: its description does that. Keep the body under about 2500 characters.
     - `tags`: short lowercase kebab-case labels for the problem, e.g. `dns-resolution`, `adblock`. Call `list-playbook-tags` first and reuse existing tags when they fit; only invent a new one when none does.
     - Write every field so the playbook applies to any machine: strip personal and customer data, also inside quoted errors and commands. That covers names of people and companies, email addresses, phone numbers, usernames, hostnames, domain names, IP and MAC addresses, serial numbers and secrets. Replace each with a placeholder naming its role, e.g. `<customer-domain>`, `<wan-ip>`, `<lan-subnet>`, `<username>`. Keep the technical details that make the problem recognizable: error messages, versions, service, option and interface names, ports.
     DESCRIPTION)]

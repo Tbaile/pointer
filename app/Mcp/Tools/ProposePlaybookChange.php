@@ -22,8 +22,8 @@ use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
 #[IsOpenWorld(false)]
 #[Description(<<<'DESCRIPTION'
     Propose a new body for a playbook found with `search-playbooks`, when it lacked a step that helped this investigation or one of its steps proved wrong. The playbook stays as it is until a technician accepts the proposal.
-    Send the whole body: keep its existing steps and add or fix only what this investigation showed, following the guidance and the anonymization rules of `record-playbook`.
-    In `reason`, name the check you added or changed and what it revealed. Skip the proposal when `search-playbooks` already lists a pending one with the same reason.
+    Send the whole body: keep its existing steps and add or fix only what this investigation showed, following the layout and the anonymization rules of `record-playbook`. Fold a new finding into the check or fix it belongs to instead of appending notes, and drop what it proves wrong: the body should not grow past about 2500 characters.
+    In `reason`, name the check you added or changed and what it revealed. A cause or fix nobody confirmed goes only in `reason`, never in the body. Skip the proposal when `get-playbook` already lists a pending one with the same reason.
     DESCRIPTION)]
 class ProposePlaybookChange extends Tool
 {

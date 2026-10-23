@@ -28,7 +28,7 @@ use Throwable;
     - `get-configuration`: the module settings, the same fields its `configure-module` takes.
     - `get-status`: `services` with `active`, `enabled` and `failed`, `images` and `volumes`. Reliable only for rootless modules: for rootfull ones read the system units.
     - `list-service-providers`: the providers of a service seen by this module, `data` e.g. `{"service": "ldap", "transport": "tcp"}`.
-    - Traefik module: `list-routes` (route names; `data` `{"expand_list": true}` adds `host`, `path`, `url`, `lets_encrypt`, `http2https` of each), `get-route` (`data` `{"instance": "<route>"}`, `{}` when there is no such route), `list-certificates` and `get-certificate` (`data` `{"fqdn": "<name>"}`: `type`, e.g. `selfsigned`, `obtained`, and `certificates` with the PEM certificate in base64).
+    - Traefik module: `list-routes` (route names; `data` `{"expand_list": true}` adds `host`, `path`, `url`, `lets_encrypt`, `http2https` of each), `get-route` (`data` `{"instance": "<route>"}`, `{}` when there is no such route), `list-certificates` and `get-certificate` (`data` `{"fqdn": "<name>"}`: `type`, e.g. `selfsigned`, `obtained`, and `certificates` with the PEM certificate in base64; for its expiry use `ns8-tls-probe`).
     - NethVoice module: `get-ports-list`, the ports allocated to the instance. Mail module: `list-domains`.
     - `Validation errors` lists the `data` fields the action expects. `Client "module/<id>" was not found` means no such instance.
     - Logs of the module: `read-logs`. Its containers: `module-containers`. Who ran which action: `audit-log`.

@@ -23,8 +23,8 @@ function searchPlaybookIds(array $arguments): array
     return array_column($result->getStructuredContent()['playbooks'], 'id');
 }
 
-test('it returns matching playbooks with their body', function () {
-    $playbook = Playbook::factory()->withTags(['dns-resolution'])->create(['body' => '# DNS']);
+test('it returns matching playbooks without their body', function () {
+    $playbook = Playbook::factory()->withTags(['dns-resolution'])->create();
 
     $result = (new SearchPlaybooks)->handle(new Request(['system_type' => 'nethsecurity', 'tags' => ['dns-resolution']]));
 
@@ -32,27 +32,22 @@ test('it returns matching playbooks with their body', function () {
         'id' => $playbook->id,
         'title' => $playbook->title,
         'tags' => ['dns-resolution'],
-        'body' => '# DNS',
         'uses_count' => 1,
         'verdict' => null,
         'updated_at' => $playbook->updated_at->toDateString(),
-        'pending_proposals' => [],
+        'pending_proposals_count' => 0,
     ]]);
 });
 
-test('it lists only the pending proposals of each playbook', function () {
+test('it counts only the pending proposals of each playbook', function () {
     $playbook = Playbook::factory()->withTags(['dns-resolution'])->create();
-    $pending = PlaybookProposal::factory()->for($playbook)->create(['reason' => 'Added the adblock check.']);
+    PlaybookProposal::factory()->for($playbook)->create();
     PlaybookProposal::factory()->for($playbook)->reviewed(ProposalStatus::Accepted)->create();
     PlaybookProposal::factory()->for($playbook)->reviewed(ProposalStatus::Rejected)->create();
 
     $result = (new SearchPlaybooks)->handle(new Request(['system_type' => 'nethsecurity', 'tags' => ['dns-resolution']]));
 
-    expect($result->getStructuredContent()['playbooks'][0]['pending_proposals'])->toBe([[
-        'id' => $pending->id,
-        'reason' => 'Added the adblock check.',
-        'created_at' => $pending->created_at->toDateString(),
-    ]]);
+    expect($result->getStructuredContent()['playbooks'][0]['pending_proposals_count'])->toBe(1);
 });
 
 test('it only returns playbooks on the same product', function () {

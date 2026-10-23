@@ -24,7 +24,7 @@ use Throwable;
     - `addresses` (default, `ip -br addr`): one line per interface with its state and every IPv4 and IPv6 address.
     - `routes` (`ip route`): the main IPv4 routing table; `ipv6` for the IPv6 one.
     - `neighbours` (`ip neigh`): the IPv4 and IPv6 neighbour table, `device` for one interface. `REACHABLE`/`STALE` entries have the MAC (`lladdr`) that answered; `FAILED` means no answer to ARP. Two IPs with the same MAC on a WAN usually mean the gateway, two MACs for the firewall's own address need `arp-probe`.
-    - `sockets`: every listening TCP and UDP socket with its address, port and owning process (`ss -tulpn` on `nethserver`, `netstat -tulpn` on `nethsecurity`). A socket with no process is held by the kernel (e.g. WireGuard). For the process behind a PID use `process-list`.
+    - `sockets`: every listening TCP and UDP socket with its address, port and owning process (`ss -tulpn` on `nethserver`, `netstat -tulpn` on `nethsecurity`). On `nethsecurity` the process name can be cut, e.g. nginx shows as `<pid>/uci.conf -g da`: match on the port. A socket with no process is held by the kernel (e.g. WireGuard). For the process behind a PID use `process-list`.
     - An unknown `device` returns `Cannot find device`.
     - On `nethsecurity`, `list-devices` has the interface configuration and zones; on `nethserver`, whether a port is allowed in is up to `firewall-status`.
     DESCRIPTION)]

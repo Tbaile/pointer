@@ -34,6 +34,7 @@ use Throwable;
 
     Times accept RFC3339, unix seconds or a relative offset such as `-1h` or `-7d`. `series` and `label_values` only look at the last day unless `start` is given.
     Keep range queries narrow (short span, coarse step, aggregated series): responses over the output cap are rejected.
+    `Failed to connect to 127.0.0.1 port 8428` means the release has no VictoriaMetrics: there is no metrics history, read the logs instead.
     DESCRIPTION)]
 class VictoriaQuery extends Tool
 {

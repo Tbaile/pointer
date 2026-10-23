@@ -5,7 +5,6 @@ namespace App\Mcp\Tools;
 use App\Enums\PlaybookVerdict;
 use App\Enums\SystemType;
 use App\Models\Playbook;
-use App\Models\PlaybookProposal;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\JsonSchema\Types\Type;
@@ -23,11 +22,11 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 #[IsReadOnly]
 #[IsOpenWorld(false)]
 #[Description(<<<'DESCRIPTION'
-    Search the playbooks for the problem the user reported, on the same product. A playbook lists either the checks that helped investigate a problem before, each with the condition under which it applies and what to look for, or how to do something on the system, like reading logs or querying a database.
+    Search the playbooks for the problem the user reported, on the same product. A playbook lists either the checks that tell apart the causes of a problem and the fix for each, or how to do something on the system, like reading logs or querying a database.
     Call it once the user has described the problem, before investigating in depth, and again when you need to do something on the system a playbook may already explain.
 
     Match by `tags` (take them from `list-playbook-tags`) and/or by free text in `query`: every word must appear in the title, the body or a tag.
-    Each playbook lists its `pending_proposals`: changes other investigations proposed and a technician has not reviewed yet.
+    It returns titles only: open the ones that match the problem with `get-playbook`. `pending_proposals_count` is how many changes other investigations proposed and a technician has not reviewed yet.
     Playbooks a technician confirmed come first, then the ones sharing the most tags, then the most used. Playbooks a technician rejected are never returned.
     A playbook is a lead, not a proof: run the steps whose conditions hold on this machine and judge the results yourself.
     DESCRIPTION)]
@@ -50,7 +49,8 @@ class SearchPlaybooks extends Tool
         $words = preg_split('/\s+/', trim($validated['query'] ?? ''), -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
         $playbooks = Playbook::query()
-            ->with(['tags', 'pendingProposals'])
+            ->with('tags')
+            ->withCount('pendingProposals')
             ->where('system_type', $validated['system_type'])
             ->where(fn (Builder $query) => $query
                 ->whereNull('verdict')
@@ -84,15 +84,10 @@ class SearchPlaybooks extends Tool
                 'id' => $playbook->id,
                 'title' => $playbook->title,
                 'tags' => $playbook->tagNames(),
-                'body' => $playbook->body,
                 'uses_count' => $playbook->uses_count,
                 'verdict' => $playbook->verdict?->value,
                 'updated_at' => $playbook->updated_at?->toDateString(),
-                'pending_proposals' => $playbook->pendingProposals->sortByDesc('id')->values()->map(fn (PlaybookProposal $proposal): array => [
-                    'id' => $proposal->id,
-                    'reason' => $proposal->reason,
-                    'created_at' => $proposal->created_at?->toDateString(),
-                ])->all(),
+                'pending_proposals_count' => $playbook->pending_proposals_count,
             ])->all(),
         ]);
     }
