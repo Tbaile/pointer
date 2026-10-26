@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\PlaybookVerdict;
+use App\Enums\Role;
 use App\Filament\Resources\Playbooks\Pages\EditPlaybook;
 use App\Models\Playbook;
 use App\Models\User;
@@ -9,7 +10,7 @@ use Livewire\Livewire;
 use function Pest\Laravel\actingAs;
 
 test('editing saves the playbook and confirms it', function () {
-    $user = User::factory()->admin()->create();
+    $user = User::factory()->role(Role::Contributor)->create();
     $playbook = Playbook::factory()->withTags(['dns'])->create();
 
     actingAs($user);
@@ -35,7 +36,7 @@ test('editing saves the playbook and confirms it', function () {
 });
 
 test('editing rejects invalid tags', function (array $tags, string $message) {
-    actingAs(User::factory()->admin()->create());
+    actingAs(User::factory()->role(Role::Contributor)->create());
 
     Livewire::test(EditPlaybook::class, ['record' => Playbook::factory()->withTags(['dns'])->create()->id])
         ->fillForm(['tags' => $tags])

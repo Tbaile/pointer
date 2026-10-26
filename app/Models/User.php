@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Laravel\Passport\Contracts\OAuthenticatable;
 use Laravel\Passport\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
@@ -22,24 +23,27 @@ use Laravel\Passport\HasApiTokens;
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property string $password
- * @property bool $is_admin
  * @property bool $must_change_password
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password', 'is_admin', 'must_change_password'])]
+#[Fillable(['name', 'email', 'password', 'must_change_password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, OAuthenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
+
+    /**
+     * Pinned to web, otherwise Spatie falls back to the passport guard on MCP requests and finds no permissions.
+     */
+    protected string $guard_name = 'web';
 
     /**
      * @var array<string, mixed>
      */
     protected $attributes = [
-        'is_admin' => false,
         'must_change_password' => false,
     ];
 
@@ -53,7 +57,6 @@ class User extends Authenticatable implements FilamentUser, OAuthenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'is_admin' => 'boolean',
             'must_change_password' => 'boolean',
         ];
     }

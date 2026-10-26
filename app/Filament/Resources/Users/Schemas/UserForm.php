@@ -2,9 +2,12 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Enums\Permission;
+use App\Enums\Role;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class UserForm
 {
@@ -21,8 +24,17 @@ class UserForm
                     ->required()
                     ->maxLength(255)
                     ->unique(ignoreRecord: true),
-                Toggle::make('is_admin')
-                    ->label(__('Administrator')),
+                Select::make('roles')
+                    ->label(__('Roles'))
+                    ->relationship(
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn (Builder $query): Builder => auth()->user()->can(Permission::AssignAdminRoles)
+                            ? $query
+                            : $query->whereIn('name', [Role::Contributor->value, Role::Technician->value]),
+                    )
+                    ->multiple()
+                    ->preload()
+                    ->required(),
             ]);
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Enums\PlaybookVerdict;
 use App\Enums\ProposalStatus;
+use App\Enums\Role;
 use App\Enums\SystemType;
 use App\Filament\Resources\Playbooks\Pages\ListPlaybooks;
 use App\Models\Playbook;
@@ -12,11 +13,11 @@ use Livewire\Livewire;
 use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
-    actingAs(User::factory()->admin()->create());
+    actingAs(User::factory()->role(Role::Contributor)->create());
 });
 
-test('non-admins are forbidden from the playbooks list', function () {
-    actingAs(User::factory()->create())
+test('technicians are forbidden from the playbooks list', function () {
+    actingAs(User::factory()->role(Role::Technician)->create())
         ->get('/admin/playbooks')
         ->assertForbidden();
 });

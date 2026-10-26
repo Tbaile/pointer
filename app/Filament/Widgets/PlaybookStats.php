@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\Permission;
 use App\Enums\ProposalStatus;
 use App\Filament\Resources\Playbooks\PlaybookResource;
 use App\Models\Playbook;
@@ -13,7 +14,7 @@ class PlaybookStats extends StatsOverviewWidget
 {
     public static function canView(): bool
     {
-        return auth()->user()->is_admin;
+        return auth()->user()->can(Permission::ManagePlaybooks);
     }
 
     protected function getStats(): array

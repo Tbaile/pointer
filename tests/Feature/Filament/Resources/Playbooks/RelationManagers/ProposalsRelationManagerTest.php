@@ -2,6 +2,7 @@
 
 use App\Enums\PlaybookVerdict;
 use App\Enums\ProposalStatus;
+use App\Enums\Role;
 use App\Filament\Resources\Playbooks\Pages\ViewPlaybook;
 use App\Filament\Resources\Playbooks\RelationManagers\ProposalsRelationManager;
 use App\Models\Playbook;
@@ -19,7 +20,7 @@ function proposalsOf(Playbook $playbook): Testable
 }
 
 test('accepting a proposal applies its body and tags and confirms the playbook', function () {
-    $user = User::factory()->admin()->create();
+    $user = User::factory()->role(Role::Contributor)->create();
     $playbook = Playbook::factory()->withTags(['dns'])->create();
     $proposal = PlaybookProposal::factory()->for($playbook)->create(['body' => '# Proposed', 'tags' => ['dns', 'adblock']]);
 
@@ -42,7 +43,7 @@ test('accepting a proposal applies its body and tags and confirms the playbook',
 });
 
 test('accepting a proposal without tags keeps the current ones', function () {
-    actingAs(User::factory()->admin()->create());
+    actingAs(User::factory()->role(Role::Contributor)->create());
     $playbook = Playbook::factory()->withTags(['dns'])->create();
     $proposal = PlaybookProposal::factory()->for($playbook)->create();
 
@@ -52,7 +53,7 @@ test('accepting a proposal without tags keeps the current ones', function () {
 });
 
 test('rejecting a proposal stores the note and leaves the playbook untouched', function () {
-    $user = User::factory()->admin()->create();
+    $user = User::factory()->role(Role::Contributor)->create();
     $playbook = Playbook::factory()->create(['body' => '# Current']);
     $proposal = PlaybookProposal::factory()->for($playbook)->create();
 
@@ -68,7 +69,7 @@ test('rejecting a proposal stores the note and leaves the playbook untouched', f
 });
 
 test('a reviewed proposal cannot be accepted or rejected', function () {
-    actingAs(User::factory()->admin()->create());
+    actingAs(User::factory()->role(Role::Contributor)->create());
     $playbook = Playbook::factory()->create();
     $proposal = PlaybookProposal::factory()->for($playbook)->reviewed(ProposalStatus::Rejected)->create();
 
@@ -79,7 +80,7 @@ test('a reviewed proposal cannot be accepted or rejected', function () {
 });
 
 test('only pending proposals are listed by default', function () {
-    actingAs(User::factory()->admin()->create());
+    actingAs(User::factory()->role(Role::Contributor)->create());
     $playbook = Playbook::factory()->create();
     $pending = PlaybookProposal::factory()->for($playbook)->create();
     $reviewed = PlaybookProposal::factory()->for($playbook)->reviewed(ProposalStatus::Rejected)->create();
@@ -90,7 +91,7 @@ test('only pending proposals are listed by default', function () {
 });
 
 test('a proposal made before the playbook changed is marked stale', function () {
-    actingAs(User::factory()->admin()->create());
+    actingAs(User::factory()->role(Role::Contributor)->create());
     $playbook = Playbook::factory()->create(['body' => '# Current']);
     PlaybookProposal::factory()->for($playbook)->create(['base_body' => '# Older']);
 
@@ -98,7 +99,7 @@ test('a proposal made before the playbook changed is marked stale', function () 
 });
 
 test('the diff shows the proposed change against the current body', function () {
-    actingAs(User::factory()->admin()->create());
+    actingAs(User::factory()->role(Role::Contributor)->create());
     $playbook = Playbook::factory()->create(['body' => "# Current\n"]);
     $proposal = PlaybookProposal::factory()->for($playbook)->create(['body' => "# Proposed\n"]);
 

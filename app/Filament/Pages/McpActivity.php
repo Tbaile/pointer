@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\Permission;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
@@ -29,7 +30,7 @@ class McpActivity extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return auth()->user()->is_admin;
+        return auth()->user()->can(Permission::ViewMcpActivity);
     }
 
     public static function getNavigationLabel(): string

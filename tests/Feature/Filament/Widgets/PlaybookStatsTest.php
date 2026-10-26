@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\PlaybookVerdict;
+use App\Enums\Role;
 use App\Filament\Widgets\PlaybookStats;
 use App\Models\Playbook;
 use App\Models\PlaybookProposal;
@@ -21,7 +22,7 @@ test('authenticated users can view the panel dashboard', function () {
 });
 
 test('the stats count unverified playbooks and pending proposals', function () {
-    actingAs(User::factory()->admin()->create());
+    actingAs(User::factory()->role(Role::Contributor)->create());
     Playbook::factory()->count(2)->create();
     Playbook::factory()->verdict(PlaybookVerdict::Confirmed)->create();
     PlaybookProposal::factory()->for(Playbook::factory()->verdict(PlaybookVerdict::Confirmed))->create();
@@ -31,8 +32,8 @@ test('the stats count unverified playbooks and pending proposals', function () {
         ->assertSeeInOrder(['Pending proposals', '1']);
 });
 
-test('non-admins do not see the stats on the dashboard', function () {
-    actingAs(User::factory()->create())
+test('technicians do not see the stats on the dashboard', function () {
+    actingAs(User::factory()->role(Role::Technician)->create())
         ->get('/admin')
         ->assertDontSee('Unverified playbooks');
 });

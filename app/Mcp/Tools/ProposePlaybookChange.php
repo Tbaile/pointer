@@ -2,8 +2,10 @@
 
 namespace App\Mcp\Tools;
 
+use App\Enums\Permission;
 use App\Enums\SystemType;
 use App\Models\Playbook;
+use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Illuminate\Validation\Rule;
@@ -27,6 +29,16 @@ use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
     DESCRIPTION)]
 class ProposePlaybookChange extends Tool
 {
+    /**
+     * Determine whether the tool is offered to the user.
+     */
+    public function shouldRegister(Request $request): bool
+    {
+        $user = $request->user();
+
+        return $user instanceof User && $user->can(Permission::ManagePlaybooks);
+    }
+
     /**
      * Handle the tool request.
      */

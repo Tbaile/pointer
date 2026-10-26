@@ -3,12 +3,15 @@
 namespace App\Providers;
 
 use App\Contracts\RemoteExecutor;
+use App\Enums\Role;
+use App\Models\User;
 use App\Services\Remote\SanchoExecutor;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\DevCommands;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Passport\Passport;
@@ -59,6 +62,8 @@ class AppServiceProvider extends ServiceProvider
         DevCommands::artisan('serve --no-reload', 'server');
 
         Passport::authorizationView(fn (array $parameters): Response => response()->view('pages.authorize', $parameters));
+
+        Gate::before(fn (User $user): ?bool => $user->hasRole(Role::SuperAdmin) ? true : null);
     }
 
     /**

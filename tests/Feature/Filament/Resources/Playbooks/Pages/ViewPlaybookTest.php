@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\PlaybookVerdict;
+use App\Enums\Role;
 use App\Filament\Resources\Playbooks\Pages\ViewPlaybook;
 use App\Models\Playbook;
 use App\Models\User;
@@ -12,7 +13,7 @@ use function Pest\Laravel\actingAs;
 test('the body is rendered as markdown with html stripped', function () {
     $playbook = Playbook::factory()->create(['body' => "## Checks\n\n<script>alert(1)</script>"]);
 
-    actingAs(User::factory()->admin()->create())
+    actingAs(User::factory()->role(Role::Contributor)->create())
         ->get("/admin/playbooks/{$playbook->id}")
         ->assertOk()
         ->assertSee('<h2>Checks</h2>', false)
@@ -20,7 +21,7 @@ test('the body is rendered as markdown with html stripped', function () {
 });
 
 test('the verdict is saved and cleared', function () {
-    $user = User::factory()->admin()->create();
+    $user = User::factory()->role(Role::Contributor)->create();
     $playbook = Playbook::factory()->create();
 
     actingAs($user);

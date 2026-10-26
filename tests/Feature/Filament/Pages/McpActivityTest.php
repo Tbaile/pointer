@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Role;
 use App\Filament\Pages\McpActivity;
 use App\Models\User;
 use Illuminate\Support\Facades\File;
@@ -44,21 +45,21 @@ function mcpLogLine(string $datetime, string $email, string $tool, string $sosId
     ]);
 }
 
-test('non admins cannot open the page', function () {
-    actingAs(User::factory()->create())
+test('contributors cannot open the page', function () {
+    actingAs(User::factory()->role(Role::Contributor)->create())
         ->get('/admin/mcp-activity')
         ->assertForbidden();
 });
 
 test('admins see every logged tool call, newest first', function () {
-    actingAs(User::factory()->admin()->create());
+    actingAs(User::factory()->role(Role::Admin)->create());
 
     Livewire::test(McpActivity::class)
         ->assertCanSeeTableRecords(['mcp-2026-10-19.log:0', 'mcp-2026-10-18.log:0'], inOrder: true);
 });
 
 test('filtering by tool shows only its calls', function () {
-    actingAs(User::factory()->admin()->create());
+    actingAs(User::factory()->role(Role::Admin)->create());
 
     Livewire::test(McpActivity::class)
         ->filterTable('tool', 'read-logs')
@@ -67,7 +68,7 @@ test('filtering by tool shows only its calls', function () {
 });
 
 test('searching matches the arguments', function () {
-    actingAs(User::factory()->admin()->create());
+    actingAs(User::factory()->role(Role::Admin)->create());
 
     Livewire::test(McpActivity::class)
         ->searchTable('sos-newer')

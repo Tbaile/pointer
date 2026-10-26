@@ -24,9 +24,9 @@ class UsersTable
                     ->searchable(),
                 TextColumn::make('email')
                     ->searchable(),
-                IconColumn::make('is_admin')
-                    ->label(__('Administrator'))
-                    ->boolean(),
+                TextColumn::make('roles.name')
+                    ->label(__('Roles'))
+                    ->badge(),
                 IconColumn::make('must_change_password')
                     ->label(__('Password change pending'))
                     ->boolean(),
@@ -39,6 +39,7 @@ class UsersTable
                 Action::make('resetPassword')
                     ->label(__('Reset password'))
                     ->icon(Heroicon::OutlinedKey)
+                    ->authorize('update')
                     ->requiresConfirmation()
                     ->modalDescription(__('A new temporary password is generated and the user must change it at the next login.'))
                     ->action(function (User $record): void {

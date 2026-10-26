@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -31,7 +32,7 @@ function loggedMcpLines(string $directory): array
 }
 
 test('a tool call is logged with the user, client, session and arguments', function () {
-    $user = User::factory()->create(['email' => 'jane@example.com']);
+    $user = User::factory()->role(Role::Technician)->create(['email' => 'jane@example.com']);
     $client = Client::factory()->create(['name' => 'Claude Code']);
     Passport::actingAs($user, guard: 'passport', client: $client);
 
@@ -60,7 +61,7 @@ test('a tool call is logged with the user, client, session and arguments', funct
 });
 
 test('a failing tool call is logged as unsuccessful', function () {
-    Passport::actingAs(User::factory()->create(), guard: 'passport');
+    Passport::actingAs(User::factory()->role(Role::Technician)->create(), guard: 'passport');
 
     postJson('/mcp/pointer', [
         'jsonrpc' => '2.0',
@@ -75,7 +76,7 @@ test('a failing tool call is logged as unsuccessful', function () {
 });
 
 test('requests other than tool calls are not logged', function () {
-    Passport::actingAs(User::factory()->create(), guard: 'passport');
+    Passport::actingAs(User::factory()->role(Role::Technician)->create(), guard: 'passport');
 
     postJson('/mcp/pointer', [
         'jsonrpc' => '2.0',
