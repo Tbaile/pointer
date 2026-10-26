@@ -9,7 +9,7 @@
         },
         "pointer": {
             "type": "http",
-            "url": "http://localhost:8000/mcp/pointer"
+            "url": "https://dn1.tb.nethserver.net/mcp/pointer"
         }
     }
 }
