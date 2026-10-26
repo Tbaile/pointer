@@ -22,7 +22,12 @@
 
 {$SERVER_NAME:localhost} {
 	log {
-		format console
+		format filter {
+			wrap console
+			request>headers delete
+			request>tls delete
+			resp_headers delete
+		}
 	}
 
 	header -Server
