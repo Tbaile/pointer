@@ -2,7 +2,7 @@
     frankenphp
 
     log default {
-		format console
+		format json
 		exclude admin.api
 	}
 }
@@ -10,7 +10,7 @@
 {$SERVER_NAME:localhost} {
 	log {
         output stdout
-		format console
+		format json
 	}
 
     header -Server
