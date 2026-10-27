@@ -20,6 +20,7 @@ class KapaServiceProvider extends ServiceProvider
             fn (): KapaRetriever => new KapaRetriever(
                 apiKey: config('services.kapa.api_key'),
                 projectId: config('services.kapa.project_id'),
+                integrationId: config('services.kapa.integration_id'),
                 sourceGroupIds: ['5ea2f7fd-9fe2-405b-baa2-5682c38d654a'],
             ),
         );
@@ -29,6 +30,7 @@ class KapaServiceProvider extends ServiceProvider
             ->give(fn (): KapaRetriever => new KapaRetriever(
                 apiKey: config('services.kapa.api_key'),
                 projectId: config('services.kapa.project_id'),
+                integrationId: config('services.kapa.integration_id'),
                 sourceGroupIds: [
                     'bdabb771-be6a-42ea-8978-c612dd94a8a3',
                     'eae9b182-9aad-45f7-a616-30c91dd2e019',
@@ -40,6 +42,7 @@ class KapaServiceProvider extends ServiceProvider
             ->give(fn (): KapaRetriever => new KapaRetriever(
                 apiKey: config('services.kapa.api_key'),
                 projectId: config('services.kapa.project_id'),
+                integrationId: config('services.kapa.integration_id'),
                 sourceGroupIds: ['e92a7b49-112e-479c-8813-0b8562b9e652'],
             ));
     }

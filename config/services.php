@@ -38,6 +38,7 @@ return [
     'kapa' => [
         'api_key' => env('KAPA_API_KEY'),
         'project_id' => env('KAPA_PROJECT_ID'),
+        'integration_id' => env('KAPA_INTEGRATION_ID'),
     ],
 
 ];

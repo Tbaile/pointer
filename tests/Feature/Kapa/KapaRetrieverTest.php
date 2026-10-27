@@ -8,10 +8,10 @@ use Illuminate\Support\Facades\Http;
 
 function retriever(): KapaRetriever
 {
-    return new KapaRetriever('test-api-key', '0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', ['5ea2f7fd-9fe2-405b-baa2-5682c38d654a']);
+    return new KapaRetriever('test-api-key', '0d1e6f2a-6b8f-4b8e-9a3e-1c2d3e4f5a6b', '7c3f9a1e-2b4d-4e6f-8a0b-1c2d3e4f5a6b', ['5ea2f7fd-9fe2-405b-baa2-5682c38d654a']);
 }
 
-test('it sends the query to the retrieval endpoint with the api key header and source group ids', function () {
+test('it sends the query to the retrieval endpoint with the api key header, integration id and source group ids', function () {
     Http::fake();
 
     retriever()->retrieve('how do I reset a password?');
@@ -21,6 +21,7 @@ test('it sends the query to the retrieval endpoint with the api key header and s
             && $request->method() === 'POST'
             && $request->hasHeader('X-API-KEY', 'test-api-key')
             && $request->data()['query'] === 'how do I reset a password?'
+            && $request->data()['integration_id'] === '7c3f9a1e-2b4d-4e6f-8a0b-1c2d3e4f5a6b'
             && $request->data()['top_k'] === 3
             && $request->data()['source_group_ids_include'] === ['5ea2f7fd-9fe2-405b-baa2-5682c38d654a'];
     });

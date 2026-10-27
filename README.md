@@ -37,6 +37,7 @@ POINTER_SUPPORT_IDENTITY=
 # kapa.ai retrieval API.
 KAPA_API_KEY=
 KAPA_PROJECT_ID=
+KAPA_INTEGRATION_ID=
 ```
 
 Leave `POINTER_SUPPORT_PORT` empty to use the default SSH port. The key is written into the container on every start, so

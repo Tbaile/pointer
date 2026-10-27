@@ -17,6 +17,7 @@ final class KapaRetriever implements KnowledgeRetriever
     public function __construct(
         private string $apiKey,
         private string $projectId,
+        private string $integrationId,
         private array $sourceGroupIds,
     ) {}
 
@@ -33,6 +34,7 @@ final class KapaRetriever implements KnowledgeRetriever
                 sprintf('%s/query/v1/projects/%s/retrieval/', self::BASE_URL, $this->projectId),
                 [
                     'query' => $query,
+                    'integration_id' => $this->integrationId,
                     'top_k' => 3,
                     'source_group_ids_include' => $this->sourceGroupIds,
                     'user' => [
