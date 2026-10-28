@@ -14,6 +14,10 @@
         "pointer": {
             "type": "http",
             "url": "https://dn1.tb.nethserver.net/mcp/pointer"
+        },
+        "pointer-admin": {
+            "type": "http",
+            "url": "https://dn1.tb.nethserver.net/mcp/pointer-admin"
         }
     }
 }

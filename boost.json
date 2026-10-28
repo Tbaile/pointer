@@ -23,6 +23,8 @@
         "tailwindcss-development",
         "filament-development",
         "blaze-optimize",
-        "laravel-permission-development"
+        "laravel-permission-development",
+        "build-requested-tool",
+        "rewrite-playbooks"
     ]
 }

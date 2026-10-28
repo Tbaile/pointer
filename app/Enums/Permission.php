@@ -17,4 +17,7 @@ enum Permission: string
 
     // Attached to no role, only the super-admin gets it
     case AssignAdminRoles = 'assign admin roles';
+
+    // Attached to no role, only the super-admin gets it
+    case ManagePointer = 'manage pointer';
 }

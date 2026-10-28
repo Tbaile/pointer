@@ -56,3 +56,16 @@ test('a technician cannot call record-playbook', function () {
         'params' => ['name' => 'record-playbook', 'arguments' => []],
     ])->assertJsonPath('error.message', 'Tool [record-playbook] not found.');
 });
+
+test('an admin is refused on the admin server', function () {
+    Passport::actingAs(User::factory()->role(Role::Admin)->create(), guard: 'passport');
+
+    postJson('/mcp/pointer-admin', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list'])->assertForbidden();
+});
+
+test('the super-admin gets the admin tools', function () {
+    Passport::actingAs(User::factory()->role(Role::SuperAdmin)->create(), guard: 'passport');
+
+    expect(postJson('/mcp/pointer-admin', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list'])->assertOk()->json('result.tools.*.name'))
+        ->toContain('dump-playbooks', 'update-playbook', 'close-tool-requests');
+});
