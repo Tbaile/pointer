@@ -7,6 +7,7 @@ use App\Enums\SystemType;
 use App\Filament\Resources\Playbooks\Pages\ListPlaybooks;
 use App\Models\Playbook;
 use App\Models\PlaybookProposal;
+use App\Models\Tag;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -38,7 +39,7 @@ test('the list shows playbooks with their pending proposal count', function () {
 test('the list filters playbooks', function (Closure $apply, string $expected) {
     $playbooks = [
         'nethserver' => Playbook::factory()->create(['title' => 'Container crash', 'system_type' => SystemType::NethServer]),
-        'confirmed' => Playbook::factory()->verdict(PlaybookVerdict::Confirmed)->create(['title' => 'Disk full']),
+        'confirmed' => Playbook::factory()->verdict(PlaybookVerdict::Confirmed)->create(['title' => 'Disk full', 'uses_count' => 3]),
         'withProposal' => Playbook::factory()->create(['title' => 'VPN down']),
         'tagged' => Playbook::factory()->withTags(['adblock'])->create(['title' => 'Blocked domains']),
     ];
@@ -51,9 +52,12 @@ test('the list filters playbooks', function (Closure $apply, string $expected) {
         ->assertCanNotSeeTableRecords(collect($playbooks)->except($expectedIds));
 })->with([
     'search by tag' => [fn ($component) => $component->searchTable('adbl'), 'tagged'],
-    'product' => [fn ($component) => $component->filterTable('system_type', 'nethserver'), 'nethserver'],
-    'confirmed' => [fn ($component) => $component->filterTable('verdict', 'confirmed'), 'confirmed'],
-    'unverified' => [fn ($component) => $component->filterTable('verdict', 'unverified'), 'nethserver,withProposal,tagged'],
+    'product' => [fn ($component) => $component->filterTable('system_type', ['nethserver']), 'nethserver'],
+    'confirmed' => [fn ($component) => $component->filterTable('verdict', ['confirmed']), 'confirmed'],
+    'unverified' => [fn ($component) => $component->filterTable('verdict', ['unverified']), 'nethserver,withProposal,tagged'],
+    'confirmed or unverified' => [fn ($component) => $component->filterTable('verdict', ['confirmed', 'unverified']), 'nethserver,confirmed,withProposal,tagged'],
+    'tag' => [fn ($component) => $component->filterTable('tags', [Tag::query()->where('name', 'adblock')->value('id')]), 'tagged'],
+    'minimum uses' => [fn ($component) => $component->filterTable('uses', ['min_uses' => 3]), 'confirmed'],
     'pending proposals' => [fn ($component) => $component->filterTable('pending'), 'withProposal'],
 ]);
 
@@ -65,4 +69,13 @@ test('the list puts pending proposals first, then unverified playbooks', functio
 
     Livewire::test(ListPlaybooks::class)
         ->assertCanSeeTableRecords([$withProposal, $unverified, $confirmed], inOrder: true);
+});
+
+test('the list sorts playbooks by uses', function () {
+    $rarelyUsed = Playbook::factory()->create(['uses_count' => 1]);
+    $oftenUsed = Playbook::factory()->create(['uses_count' => 5]);
+
+    Livewire::test(ListPlaybooks::class)
+        ->sortTable('uses_count', 'desc')
+        ->assertCanSeeTableRecords([$oftenUsed, $rarelyUsed], inOrder: true);
 });

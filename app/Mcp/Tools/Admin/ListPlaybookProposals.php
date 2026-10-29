@@ -33,6 +33,7 @@ class ListPlaybookProposals extends Tool
     {
         $validated = $request->validate([
             'status' => ['nullable', Rule::enum(ProposalStatus::class)],
+            'playbook_id' => 'integer',
             'offset' => 'integer|min:0',
             'limit' => 'integer|min:1|max:50',
         ]);
@@ -40,7 +41,8 @@ class ListPlaybookProposals extends Tool
         $status = $validated['status'] ?? null;
 
         $query = PlaybookProposal::query()
-            ->when($status, fn (Builder $query) => $query->where('status', $status));
+            ->when($status, fn (Builder $query) => $query->where('status', $status))
+            ->when(isset($validated['playbook_id']), fn (Builder $query) => $query->where('playbook_id', $validated['playbook_id']));
 
         $proposals = (clone $query)
             ->with('playbook')
@@ -75,6 +77,8 @@ class ListPlaybookProposals extends Tool
             'status' => $schema->string()
                 ->enum(array_column(ProposalStatus::cases(), 'value'))
                 ->description('Only return proposals in this status, e.g. "pending".'),
+            'playbook_id' => $schema->integer()
+                ->description('Only return the proposals of this playbook, e.g. 32.'),
             'offset' => $schema->integer()
                 ->min(0)
                 ->description('How many proposals to skip. Defaults to 0.'),

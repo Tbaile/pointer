@@ -6,8 +6,8 @@ use App\Enums\PlaybookVerdict;
 use App\Enums\ProposalStatus;
 use App\Enums\SystemType;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Enums\PaginationMode;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -40,26 +40,51 @@ class PlaybooksTable
                 TextColumn::make('system_type')
                     ->label(__('Product')),
                 TextColumn::make('verdict')
-                    ->placeholder(__('Unverified')),
+                    ->badge()
+                    ->placeholder(__('Unverified'))
+                    ->sortable(),
                 TextColumn::make('uses_count')
-                    ->label(__('Uses')),
+                    ->label(__('Uses'))
+                    ->sortable(),
                 TextColumn::make('pending_proposals_count')
-                    ->label(__('Pending proposals')),
+                    ->label(__('Pending proposals'))
+                    ->sortable(),
                 TextColumn::make('updated_at')
                     ->label(__('Updated'))
-                    ->dateTime('Y-m-d H:i'),
+                    ->dateTime('Y-m-d H:i')
+                    ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('system_type')
                     ->label(__('Product'))
-                    ->options(SystemType::class),
+                    ->options(SystemType::class)
+                    ->multiple(),
                 SelectFilter::make('verdict')
                     ->options(['unverified' => __('Unverified')] + collect(PlaybookVerdict::cases())->mapWithKeys(fn (PlaybookVerdict $verdict): array => [$verdict->value => $verdict->getLabel()])->all())
-                    ->query(fn (Builder $query, array $data) => match ($data['value'] ?? null) {
-                        null, '' => $query,
-                        'unverified' => $query->whereNull('verdict'),
-                        default => $query->where('verdict', $data['value']),
-                    }),
+                    ->multiple()
+                    ->query(fn (Builder $query, array $data) => $query->when(
+                        filled($data['values'] ?? null),
+                        fn (Builder $query) => $query->where(fn (Builder $verdictQuery) => $verdictQuery
+                            ->whereIn('verdict', array_diff($data['values'], ['unverified']))
+                            ->when(in_array('unverified', $data['values'], true), fn (Builder $verdictQuery) => $verdictQuery->orWhereNull('verdict'))),
+                    )),
+                SelectFilter::make('tags')
+                    ->label(__('Tags'))
+                    ->relationship('tags', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload(),
+                Filter::make('uses')
+                    ->schema([
+                        TextInput::make('min_uses')
+                            ->label(__('Minimum uses'))
+                            ->numeric()
+                            ->minValue(0),
+                    ])
+                    ->query(fn (Builder $query, array $data) => $query->when(
+                        filled($data['min_uses'] ?? null),
+                        fn (Builder $query) => $query->where('uses_count', '>=', (int) $data['min_uses']),
+                    )),
                 Filter::make('pending')
                     ->label(__('With pending proposals'))
                     ->toggle()
@@ -67,8 +92,6 @@ class PlaybooksTable
             ])
             ->recordActions([
                 ViewAction::make(),
-            ])
-            ->paginationMode(PaginationMode::Simple)
-            ->paginationPageOptions([15]);
+            ]);
     }
 }

@@ -32,3 +32,12 @@ test('it filters by status', function () {
 
     expect(array_column($result['proposals'], 'id'))->toBe([$pending->id]);
 });
+
+test('it filters by playbook', function () {
+    $proposal = PlaybookProposal::factory()->create();
+    PlaybookProposal::factory()->create();
+
+    $result = (new ListPlaybookProposals)->handle(new Request(['playbook_id' => $proposal->playbook_id]))->getStructuredContent();
+
+    expect(array_column($result['proposals'], 'id'))->toBe([$proposal->id]);
+});
