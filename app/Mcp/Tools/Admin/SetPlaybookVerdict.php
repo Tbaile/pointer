@@ -46,7 +46,7 @@ class SetPlaybookVerdict extends Tool
             return Response::error('Only an authenticated user can set a verdict.');
         }
 
-        $playbook = Playbook::query()->findOrFail($validated['id']);
+        $playbook = Playbook::query()->whereKey($validated['id'])->firstOrFail();
 
         $this->setPlaybookVerdict->handle($playbook, $reviewer, PlaybookVerdict::tryFrom($validated['verdict']), $validated['note'] ?? null);
 

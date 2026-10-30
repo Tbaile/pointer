@@ -24,7 +24,9 @@ use Throwable;
     - `entity` `cluster` (default): every node and module. `node`: one node, `name` is its id, e.g. `1`. `module`: one instance, `name` is its id, e.g. `traefik1` or `webtop3`.
     - Each line reads `<time> [<node id>:<module id>:<process>] <message>`.
     - Returns the last `lines` records of the range, 100 by default. Narrow with `search` and `from`/`to` rather than raising `lines`.
+    - Prefer several calls over short windows to one call over a long range: a wide range is slow and can time out. Split it by day or by hour, then narrow around what you find.
     - `from` and `to` are RFC3339, e.g. `2026-10-07T08:00:00Z`; each output line starts with the node's local time and its offset, e.g. `2026-10-07T10:00:00+02:00`.
+    - Kernel messages are included, with the full boot log of every boot: `entity` `node` with `search` `:kernel]` and a window starting at the boot, e.g. to map a disk to its device or read what the kernel logged before a reset.
     DESCRIPTION)]
 class ReadLogs extends Tool
 {
