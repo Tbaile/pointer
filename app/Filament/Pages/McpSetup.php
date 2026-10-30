@@ -7,6 +7,7 @@ use Filament\Actions\Action;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Text;
@@ -44,7 +45,7 @@ class McpSetup extends Page
                                 Text::make(__('Run this in a terminal, then run /mcp inside Claude Code and select pointer to sign in.')),
                                 $this->snippet('claudeCode', "claude mcp add --transport http --scope user pointer {$url}", 'shell'),
                             ]),
-                        Tab::make('Claude Desktop')
+                        Tab::make('Claude')
                             ->schema([
                                 Text::make(__('In Claude, go to Customize > Connectors, click Add custom connector, paste this URL and click Add. If asked for an OAuth client, choose Register automatically. Then click Connect to sign in. On Team and Enterprise plans an Owner adds the connector from Organization settings > Connectors, and members only click Connect.')),
                                 $this->snippet('claudeDesktop', $url, 'text'),
@@ -52,6 +53,16 @@ class McpSetup extends Page
                                     Action::make('openClaudeConnectors')
                                         ->label(__('Open Claude connectors'))
                                         ->url('https://claude.ai/customize/connectors', shouldOpenInNewTab: true),
+                                ]),
+                            ]),
+                        Tab::make('ChatGPT')
+                            ->schema([
+                                Text::make(__('In ChatGPT, go to Plugins, click +, then Add custom MCP server. Name it pointer, paste this URL as Server URL, choose OAuth and confirm the warning, then click Create as a plugin. Install it from your plugins and sign in, then type @pointer in a chat to use it. On Business, Enterprise and Edu workspaces you need the permission to create plugins with MCPs.')),
+                                $this->snippet('chatGpt', $url, 'text'),
+                                Actions::make([
+                                    Action::make('openChatGptPlugins')
+                                        ->label(__('Open ChatGPT plugins'))
+                                        ->url('https://chatgpt.com/plugins', shouldOpenInNewTab: true),
                                 ]),
                             ]),
                         Tab::make('Codex CLI')
@@ -81,6 +92,13 @@ class McpSetup extends Page
                                 ]),
                                 $this->snippet('vsCodeConfig', $this->json(['servers' => ['pointer' => ['type' => 'http', 'url' => $url]]], pretty: true), 'json'),
                             ]),
+                    ]),
+                Section::make(__('Prompt'))
+                    ->description(__('Pointer serves this prompt as Diagnose Machine, it tells the agent how to run the investigation. Some clients, like ChatGPT, can\'t load prompts from an MCP server: if yours doesn\'t offer Diagnose Machine, paste this as your first message, followed by the SOS id and the problem.'))
+                    ->collapsible()
+                    ->collapsed()
+                    ->schema([
+                        $this->snippet('prompt', view('prompts.mcp.pointer')->render(), 'text'),
                     ]),
             ]);
     }
