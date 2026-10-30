@@ -33,12 +33,16 @@ class PlaybooksTable
                             ->whereLike('title', "%{$search}%")
                             ->orWhereLike('body', "%{$search}%")
                             ->orWhereHas('tags', fn (Builder $tagQuery) => $tagQuery->whereLike('name', "%{$search}%")),
-                    )),
+                    ))
+                    ->sortable(),
                 TextColumn::make('tags.name')
                     ->label(__('Tags'))
-                    ->badge(),
+                    ->badge()
+                    ->searchable(isIndividual: true, isGlobal: false),
                 TextColumn::make('system_type')
-                    ->label(__('Product')),
+                    ->label(__('Product'))
+                    ->searchable(isIndividual: true, isGlobal: false)
+                    ->sortable(),
                 TextColumn::make('verdict')
                     ->badge()
                     ->placeholder(__('Unverified'))

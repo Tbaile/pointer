@@ -19,6 +19,8 @@ class McpSetup extends Page
 
     protected static ?string $slug = 'mcp-setup';
 
+    protected static ?int $navigationSort = 1;
+
     public static function getNavigationLabel(): string
     {
         return __('MCP setup');

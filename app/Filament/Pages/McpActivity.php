@@ -28,6 +28,8 @@ class McpActivity extends Page implements HasTable
 
     protected static ?string $slug = 'mcp-activity';
 
+    protected static ?int $navigationSort = 4;
+
     public static function canAccess(): bool
     {
         return auth()->user()->can(Permission::ViewMcpActivity);
@@ -60,12 +62,16 @@ class McpActivity extends Page implements HasTable
                         fn (array $entry): bool => Str::contains(json_encode($entry, JSON_THROW_ON_ERROR), $search, ignoreCase: true),
                     ));
 
-                foreach (['user_email', 'client', 'tool', 'sos_id'] as $key) {
+                foreach (['user_email', 'client', 'tool'] as $key) {
                     $value = $filters[$key]['value'] ?? null;
 
                     if (filled($value)) {
                         $entries = $entries->where($key, $value);
                     }
+                }
+
+                if (filled($filters['sos_id']['values'] ?? null)) {
+                    $entries = $entries->whereIn('sos_id', $filters['sos_id']['values']);
                 }
 
                 return new LengthAwarePaginator(
@@ -106,7 +112,9 @@ class McpActivity extends Page implements HasTable
                     ->options(fn (): array => $this->options('tool')),
                 SelectFilter::make('sos_id')
                     ->label(__('SOS id'))
-                    ->options(fn (): array => $this->options('sos_id')),
+                    ->options(fn (): array => $this->options('sos_id'))
+                    ->multiple()
+                    ->searchable(),
             ])
             ->recordActions([
                 Action::make('arguments')

@@ -67,6 +67,15 @@ test('filtering by tool shows only its calls', function () {
         ->assertCanNotSeeTableRecords(['mcp-2026-10-19.log:0']);
 });
 
+test('filtering by sos id shows only the calls on the picked machines', function () {
+    actingAs(User::factory()->role(Role::Admin)->create());
+
+    Livewire::test(McpActivity::class)
+        ->filterTable('sos_id', ['sos-older'])
+        ->assertCanSeeTableRecords(['mcp-2026-10-18.log:0'])
+        ->assertCanNotSeeTableRecords(['mcp-2026-10-19.log:0']);
+});
+
 test('searching matches the arguments', function () {
     actingAs(User::factory()->role(Role::Admin)->create());
 
