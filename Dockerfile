@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM dunglas/frankenphp:1.13.1-php8.5.12-alpine AS base
+FROM dunglas/frankenphp:1.13.4-php8.5.12-alpine AS base
 
 RUN apk add --no-cache openssh-client-default
 
@@ -22,7 +22,7 @@ FROM base AS dev
 
 RUN cp "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 
-COPY --link --from=composer:2.10.3 /usr/bin/composer /usr/bin/composer
+COPY --link --from=composer:2.11.1 /usr/bin/composer /usr/bin/composer
 
 COPY --chmod=755 containers/php/entrypoint.dev.sh /usr/local/bin/pointer-entrypoint
 
@@ -33,7 +33,7 @@ CMD ["--config", "/etc/frankenphp/Caddyfile", "--adapter", "caddyfile"]
 
 FROM base AS vendor
 
-COPY --link --from=composer:2.10.3 /usr/bin/composer /usr/bin/composer
+COPY --link --from=composer:2.11.1 /usr/bin/composer /usr/bin/composer
 
 COPY composer.json composer.json
 COPY composer.lock composer.lock
@@ -55,7 +55,7 @@ RUN mkdir -p storage/app/private storage/app/public storage/framework/cache/data
     && composer check-platform-reqs --no-dev \
     && composer dump-autoload --optimize --no-dev
 
-FROM node:24.20.0-alpine AS assets
+FROM node:26.13.0-alpine AS assets
 
 WORKDIR /app
 
@@ -75,7 +75,7 @@ RUN npm run build
 
 FROM base AS ci
 
-COPY --link --from=composer:2.10.3 /usr/bin/composer /usr/bin/composer
+COPY --link --from=composer:2.11.1 /usr/bin/composer /usr/bin/composer
 
 COPY composer.json composer.json
 COPY composer.lock composer.lock

@@ -44,7 +44,7 @@ services:
         condition: service_healthy
 
   node:
-    image: node:24.20.0-trixie-slim
+    image: node:26.13.0-trixie-slim
     user: node
     working_dir: /app
     command: ["npm", "run", "dev"]
