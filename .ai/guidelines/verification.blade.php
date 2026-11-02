@@ -17,6 +17,6 @@ Never finish a task on "the edit looks right". After changing files, run the che
 
 ## Before Reporting Done
 
-Run the full gate the CI runs, or ask the user to: `composer test` (config clear + Pint check + PHPStan + Pest). CI also runs `npm run format:check` and `npm run build`, so both must pass too.
+Run the full gate the CI runs, or ask the user to: `composer ci:check` (Pint check + PHPStan + Pest). CI also runs `npm run format:check` and `npm run build`, so both must pass too.
 
 Report results honestly: name the commands you ran, quote the decisive failing line when something breaks, and state plainly which checks you skipped and why.

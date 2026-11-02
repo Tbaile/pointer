@@ -106,7 +106,7 @@ RUN mkdir -p storage/app/private storage/app/public storage/framework/cache/data
 
 USER pointer
 
-CMD ["php", "artisan", "test"]
+CMD ["composer", "test"]
 
 FROM base AS prod
 

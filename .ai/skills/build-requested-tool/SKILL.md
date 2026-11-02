@@ -47,7 +47,7 @@ Read `.ai/rules/index.md` and the rules for `app/Mcp/Tools/**` and `tests/**` fi
 - Description: what it returns, which product it works on, how to read the output, and a pointer to the tool for the next level of analysis (`service-status` points to `victoria-query` on `procd_service_running` for history).
 - Attributes `#[Title]`, `#[IsReadOnly]`, `#[IsOpenWorld(false)]`. Register the tool in `app/Mcp/Servers/PointerServer.php` next to its siblings.
 - Tests: `php artisan make:test --pest Mcp/Tools/<Product>/<Name>Test`. Use an anonymous `RemoteExecutor` that records the command, as in `ReadSystemLogTest.php`. Assert the exact command per input shape, rejection of bad or unsafe input (with the executor never called), and error mapping.
-- Run `vendor/bin/pint --dirty --format agent`, the new tests, `composer types:check`, then `composer test`. Then run the exact command strings the tests assert on the test machine.
+- Run `vendor/bin/pint --dirty --format agent`, the new tests, `composer types:check`, then `composer ci:check`. Then run the exact command strings the tests assert on the test machine.
 
 ## 5. Rewrite the playbooks
 

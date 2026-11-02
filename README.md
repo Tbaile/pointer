@@ -82,7 +82,8 @@ docker compose exec app php artisan kapa:query:nsec "how do I configure a wan fa
 ## Checks
 
 ```bash
-docker compose exec app composer test            # config clear + Pint + PHPStan + Pest
+docker compose exec app composer ci:check        # Pint + PHPStan + Pest
+docker compose exec app composer test            # Pest only, in parallel
 docker compose exec app composer lint            # fix code style
 docker compose exec app composer types:check     # PHPStan only
 docker compose exec node npm run format:check    # Prettier on Blade views
