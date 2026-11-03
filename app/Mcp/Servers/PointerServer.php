@@ -38,6 +38,7 @@ use App\Mcp\Tools\NethServer\ModuleAction;
 use App\Mcp\Tools\NethServer\ModuleContainers;
 use App\Mcp\Tools\NethServer\ModuleEnvironment;
 use App\Mcp\Tools\NethServer\Ping as Ns8Ping;
+use App\Mcp\Tools\NethServer\PrometheusQuery;
 use App\Mcp\Tools\NethServer\ReadLogs;
 use App\Mcp\Tools\NethServer\Rtpengine;
 use App\Mcp\Tools\NethServer\StartNodeSupport;
@@ -108,6 +109,7 @@ class PointerServer extends Server
         ListModules::class,
         ModuleContainers::class,
         ModuleEnvironment::class,
+        PrometheusQuery::class,
         FirewallStatus::class,
         Crowdsec::class,
         ClusterAction::class,
