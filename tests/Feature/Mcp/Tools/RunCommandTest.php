@@ -4,9 +4,13 @@ use App\Contracts\RemoteExecutor;
 use App\Mcp\Tools\RunCommand;
 use App\Models\ToolRequest;
 use App\Services\Remote\CommandResult;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Laravel\Ai\Classification;
+use Laravel\Ai\Responses\ClassificationResponse;
 use Laravel\Ai\Responses\Data\ChoiceAnswer;
+use Laravel\Ai\Responses\Data\Meta;
+use Laravel\Ai\Responses\Data\TextUsage;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
@@ -103,6 +107,29 @@ test('it refuses a safe verdict below the threshold without running it', functio
 
     expect((string) $result->content())->toBe('Not run: the command wasn\'t confidently classified as safe (verdict: safe). Call `run-command-approved` with the same arguments, so the user can review it.');
     expect($executor->calledWithCommand)->toBeNull();
+});
+
+test('it logs the classification verdict and token usage', function () {
+    Classification::fake([new ClassificationResponse(
+        ['risk' => new ChoiceAnswer('safe', ['safe' => 1.0, 'sensitive' => 0.0, 'destructive' => 0.0])],
+        new TextUsage(392, 41),
+        new Meta('typesafe', 'jev-1.14.0'),
+    )]);
+    $logger = Mockery::spy();
+    Log::shouldReceive('channel')->with('mcp')->andReturn($logger);
+    $toolRequest = ToolRequest::factory()->create();
+
+    runCommand(new FakeRemoteExecutor(new CommandResult('')), ['tool_request_id' => $toolRequest->id, 'command' => 'df -h']);
+
+    $logger->shouldHaveReceived('info')->with('run-command/classification', [
+        'sos_id' => 'a1b2c3d4-0000-0000-0000-000000000000',
+        'command' => 'df -h',
+        'verdict' => 'safe',
+        'probabilities' => ['safe' => 1.0, 'sensitive' => 0.0, 'destructive' => 0.0],
+        'model' => 'jev-1.14.0',
+        'input_tokens' => 392,
+        'output_tokens' => 41,
+    ])->once();
 });
 
 test('it refuses the command when the classification fails', function () {

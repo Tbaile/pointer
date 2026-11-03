@@ -6,6 +6,7 @@ use App\Contracts\RemoteExecutor;
 use App\Models\ToolRequest;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Laravel\Ai\Classification;
 use Laravel\Ai\Classification\Choice;
@@ -62,18 +63,29 @@ class RunCommand extends Tool
         ]);
 
         try {
-            /** @var ChoiceAnswer $risk */
-            $risk = Classification::of($validated['command'])
+            $classification = Classification::of($validated['command'])
                 ->question('risk', new Choice('This shell command runs as root on a customer\'s production NethServer 8 or NethSecurity machine. What does it do?', [
                     'safe' => 'Only reads system state: disk, memory, uptime, processes, service status, filtered logs',
                     'sensitive' => 'Reads secrets, credentials, keys, environment variables, databases, mailboxes or user data',
                     'destructive' => 'Writes, deletes, restarts, installs or changes configuration',
                 ]))
-                ->classify()
-                ->answer('risk');
+                ->classify();
         } catch (Throwable) {
             return Response::text('Not run: the command could not be classified. Call `run-command-approved` with the same arguments, so the user can review it.');
         }
+
+        /** @var ChoiceAnswer $risk */
+        $risk = $classification->answer('risk');
+
+        Log::channel('mcp')->info('run-command/classification', [
+            'sos_id' => $validated['sos_id'],
+            'command' => $validated['command'],
+            'verdict' => $risk->choice,
+            'probabilities' => $risk->probabilities,
+            'model' => $classification->meta->model,
+            'input_tokens' => $classification->usage->inputTokens,
+            'output_tokens' => $classification->usage->outputTokens,
+        ]);
 
         if ($risk->choice !== 'safe' || $risk->probabilityOf('safe') < self::SAFE_THRESHOLD) {
             return Response::text("Not run: the command wasn't confidently classified as safe (verdict: {$risk->choice}). Call `run-command-approved` with the same arguments, so the user can review it.");
