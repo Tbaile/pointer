@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Laravel\Ai\Classification;
 use Laravel\Ai\Responses\ClassificationResponse;
-use Laravel\Ai\Responses\Data\ChoiceAnswer;
+use Laravel\Ai\Responses\Data\BooleanAnswer;
 use Laravel\Ai\Responses\Data\Meta;
 use Laravel\Ai\Responses\Data\TextUsage;
 use Laravel\Mcp\Request;
@@ -26,15 +26,27 @@ function runCommand(RemoteExecutor $executor, array $arguments): Response|Respon
 }
 
 /**
- * @param  array<string, float>  $probabilities
+ * @param  array<string, float>  $probabilities  Overrides of the risks, every other one is 0.01.
+ * @return array<string, BooleanAnswer>
  */
-function fakeRisk(string $choice, array $probabilities): void
+function riskAnswers(array $probabilities = []): array
 {
-    Classification::fake([['risk' => new ChoiceAnswer($choice, $probabilities)]]);
+    $probabilities = [
+        'writes_files' => 0.01,
+        'changes_settings' => 0.01,
+        'affects_services' => 0.01,
+        'changes_packages' => 0.01,
+        'writes_database' => 0.01,
+        'prints_secrets' => 0.01,
+        'prints_user_data' => 0.01,
+        ...$probabilities,
+    ];
+
+    return array_map(fn (float $probability): BooleanAnswer => new BooleanAnswer($probability), $probabilities);
 }
 
 test('it runs the command on the target and returns its result', function () {
-    fakeRisk('safe', ['safe' => 0.95, 'sensitive' => 0.04, 'destructive' => 0.01]);
+    Classification::fake([riskAnswers()]);
     $toolRequest = ToolRequest::factory()->create();
     $executor = new FakeRemoteExecutor(new CommandResult("line\n", 'warning', 0));
 
@@ -47,7 +59,7 @@ test('it runs the command on the target and returns its result', function () {
 });
 
 test('it returns a non-zero exit as a result rather than as an error', function () {
-    fakeRisk('safe', ['safe' => 0.95, 'sensitive' => 0.04, 'destructive' => 0.01]);
+    Classification::fake([riskAnswers()]);
     $toolRequest = ToolRequest::factory()->create();
 
     $result = runCommand(
@@ -60,7 +72,7 @@ test('it returns a non-zero exit as a result rather than as an error', function 
 });
 
 test('it reports a broken session as an error', function () {
-    fakeRisk('safe', ['safe' => 0.95, 'sensitive' => 0.04, 'destructive' => 0.01]);
+    Classification::fake([riskAnswers()]);
     $toolRequest = ToolRequest::factory()->create();
 
     $result = runCommand(
@@ -85,33 +97,33 @@ test('it refuses to run without an existing tool request', function () {
     expect($executor->calledWithCommand)->toBeNull();
 });
 
-test('it refuses a command classified as sensitive without running it', function () {
-    fakeRisk('sensitive', ['safe' => 0.1, 'sensitive' => 0.85, 'destructive' => 0.05]);
+test('it refuses a command flagged with a risk without running it', function () {
+    Classification::fake([riskAnswers(['prints_user_data' => 0.9, 'writes_database' => 0.4])]);
     $toolRequest = ToolRequest::factory()->create();
     $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     $result = runCommand($executor, ['tool_request_id' => $toolRequest->id, 'command' => 'runagent -m webtop1 mysql -e "select * from users"']);
 
     expect($result)->toBeInstanceOf(Response::class);
-    expect((string) $result->content())->toBe('Not run: the command wasn\'t confidently classified as safe (verdict: sensitive). Call `run-command-approved` with the same arguments, so the user can review it.');
+    expect((string) $result->content())->toBe('Not run: flagged as writes_database, prints_user_data. Call `run-command-approved` with the same arguments, so the user can review it.');
     expect($executor->calledWithCommand)->toBeNull();
-    Classification::assertClassified(fn ($prompt) => $prompt->contains('runagent -m webtop1 mysql'));
+    Classification::assertClassified(fn ($prompt) => $prompt->contains('runagent -m webtop1 mysql') && $prompt->count() === 7);
 });
 
-test('it refuses a safe verdict below the threshold without running it', function () {
-    fakeRisk('safe', ['safe' => 0.6, 'sensitive' => 0.3, 'destructive' => 0.1]);
+test('it refuses a risk at the threshold without running it', function () {
+    Classification::fake([riskAnswers(['writes_files' => 0.3])]);
     $toolRequest = ToolRequest::factory()->create();
     $executor = new FakeRemoteExecutor(new CommandResult(''));
 
     $result = runCommand($executor, ['tool_request_id' => $toolRequest->id, 'command' => 'free -m']);
 
-    expect((string) $result->content())->toBe('Not run: the command wasn\'t confidently classified as safe (verdict: safe). Call `run-command-approved` with the same arguments, so the user can review it.');
+    expect((string) $result->content())->toBe('Not run: flagged as writes_files. Call `run-command-approved` with the same arguments, so the user can review it.');
     expect($executor->calledWithCommand)->toBeNull();
 });
 
-test('it logs the classification verdict and token usage', function () {
+test('it logs the classification and token usage', function () {
     Classification::fake([new ClassificationResponse(
-        ['risk' => new ChoiceAnswer('safe', ['safe' => 1.0, 'sensitive' => 0.0, 'destructive' => 0.0])],
+        riskAnswers(['writes_files' => 0.0]),
         new TextUsage(392, 41),
         new Meta('typesafe', 'jev-1.14.0'),
     )]);
@@ -124,8 +136,16 @@ test('it logs the classification verdict and token usage', function () {
     $logger->shouldHaveReceived('info')->with('run-command/classification', [
         'sos_id' => 'a1b2c3d4-0000-0000-0000-000000000000',
         'command' => 'df -h',
-        'verdict' => 'safe',
-        'probabilities' => ['safe' => 1.0, 'sensitive' => 0.0, 'destructive' => 0.0],
+        'flagged' => [],
+        'probabilities' => [
+            'writes_files' => 0.0,
+            'changes_settings' => 0.01,
+            'affects_services' => 0.01,
+            'changes_packages' => 0.01,
+            'writes_database' => 0.01,
+            'prints_secrets' => 0.01,
+            'prints_user_data' => 0.01,
+        ],
         'model' => 'jev-1.14.0',
         'input_tokens' => 392,
         'output_tokens' => 41,

@@ -9,8 +9,8 @@ use Illuminate\JsonSchema\Types\Type;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Laravel\Ai\Classification;
-use Laravel\Ai\Classification\Choice;
-use Laravel\Ai\Responses\Data\ChoiceAnswer;
+use Laravel\Ai\Classification\Boolean;
+use Laravel\Ai\Responses\Data\BooleanAnswer;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
@@ -36,18 +36,18 @@ use Throwable;
     - Bound the output: filter on a specific pattern and limit the lines, never grep a whole log or directory tree unfiltered.
     - NethSecurity runs BusyBox: many GNU options are missing.
     - Never write, restart or delete anything unless the user explicitly asked for it.
-    - Never call external services from the machine, and never pass the machine's credentials on the command line.
+    - Never pass the machine's credentials on the command line.
 
     The output is returned as is: secrets in it are not masked. Avoid commands that print them, like dumping a container's environment or a VPN private key.
 
-    Commands that only read system state run right away. Commands that read sensitive data or change something are refused: call `run-command-approved` with the same arguments, so the user can review them.
+    Commands that only read system state run right away. Commands that change files, settings, services, packages or databases, or that print secrets or users' data, are refused: call `run-command-approved` with the same arguments, so the user can review them.
     DESCRIPTION)]
 class RunCommand extends Tool
 {
     /**
-     * Minimum probability of the `safe` verdict to run a command without asking the user.
+     * Probability of any risk at or above which the command needs the user's approval.
      */
-    private const float SAFE_THRESHOLD = 0.8;
+    private const float RISK_THRESHOLD = 0.3;
 
     public function __construct(private readonly RemoteExecutor $executor) {}
 
@@ -62,33 +62,69 @@ class RunCommand extends Tool
             'command' => ['required', 'string', 'max:1024'],
         ]);
 
+        $questions = [
+            'writes_files' => new Boolean('Does `command` create, overwrite, move or delete a file or directory?', [
+                'true' => 'It writes to the filesystem, e.g. `rm`, `mv`, `cp`, `sed -i`, a `>` redirect into a file, `find -delete`',
+                'false' => 'It only prints, e.g. `cat`, `grep`, `ls -l`, `find -exec ls -l {} +`',
+            ]),
+            'changes_settings' => new Boolean('Does `command` change a setting of the machine or of one of its modules?', [
+                'true' => 'It sets or applies a value, e.g. `uci set`, `uci commit`, `sysctl -w`, `ethtool -s`, an `api-cli run` action that adds, alters or removes something',
+                'false' => 'It only reads settings, e.g. `uci show`, `uci changes`, `sysctl <key>`, `ethtool <dev>`, an `api-cli run` action that lists or gets',
+            ]),
+            'affects_services' => new Boolean('Does `command` start, stop, restart, reload or kill a service, container or process?', [
+                'true' => 'It acts on a running program, e.g. `systemctl restart`, `/etc/init.d/<service> reload`, `podman stop`, `kill`',
+                'false' => 'It only reports their state, e.g. `systemctl status`, `systemctl --failed`, `podman ps`, `ps`',
+            ]),
+            'changes_packages' => new Boolean('Does `command` install, remove or upgrade software?', [
+                'true' => 'e.g. `apk add`, `apk del`, `apk upgrade`, `dnf install`, `podman pull`',
+                'false' => 'It only lists or inspects installed software, e.g. `apk info`, `apk list --installed`, `<binary> --version`',
+            ]),
+            'writes_database' => new Boolean('Does `command` modify data in a database?', [
+                'true' => 'It runs a write statement such as `INSERT`, `UPDATE`, `DELETE`, `DROP` or `ALTER`, or writes or deletes a Redis key',
+                'false' => 'It only runs `SELECT` queries or reads Redis keys',
+            ]),
+            'prints_secrets' => new Boolean('Can the output of `command` contain a password, private key, token or other credential?', [
+                'true' => 'It prints a process or container environment (`env`), a key or credentials file, a Redis hash of a service registration, or a bind or API configuration without filtering it',
+                'false' => 'Its source holds no credentials, like logs, status or sizes, or the output is filtered down to fields that hold none, e.g. `jq \'keys\'`',
+            ]),
+            'prints_user_data' => new Boolean('Does `command` print content that belongs to the customer\'s users?', [
+                'true' => 'It prints mail headers or bodies (`doveadm fetch`), rows of an application database, a user\'s files or call records',
+                'false' => 'It prints system data: logs, status, configuration, sizes or counts, e.g. table sizes from `information_schema`',
+            ]),
+        ];
+
         try {
-            $classification = Classification::of($validated['command'])
-                ->question('risk', new Choice('This shell command runs as root on a customer\'s production NethServer 8 or NethSecurity machine. What does it do?', [
-                    'safe' => 'Only reads system state: disk, memory, uptime, processes, service status, filtered logs',
-                    'sensitive' => 'Reads secrets, credentials, keys, environment variables, databases, mailboxes or user data',
-                    'destructive' => 'Writes, deletes, restarts, installs or changes configuration',
-                ]))
+            $classification = Classification::of([
+                'machine' => 'A customer\'s production NethServer 8 node or NethSecurity firewall',
+                'user' => 'root',
+                'command' => $validated['command'],
+            ])
+                ->questions($questions)
                 ->classify();
+
+            $probabilities = collect($questions)
+                ->map(fn (Boolean $question, string $risk) => $classification->answer($risk))
+                ->ensure(BooleanAnswer::class)
+                ->map->probability
+                ->all();
         } catch (Throwable) {
             return Response::text('Not run: the command could not be classified. Call `run-command-approved` with the same arguments, so the user can review it.');
         }
 
-        /** @var ChoiceAnswer $risk */
-        $risk = $classification->answer('risk');
+        $flagged = array_keys(array_filter($probabilities, fn (float $probability): bool => $probability >= self::RISK_THRESHOLD));
 
         Log::channel('mcp')->info('run-command/classification', [
             'sos_id' => $validated['sos_id'],
             'command' => $validated['command'],
-            'verdict' => $risk->choice,
-            'probabilities' => $risk->probabilities,
+            'flagged' => $flagged,
+            'probabilities' => $probabilities,
             'model' => $classification->meta->model,
             'input_tokens' => $classification->usage->inputTokens,
             'output_tokens' => $classification->usage->outputTokens,
         ]);
 
-        if ($risk->choice !== 'safe' || $risk->probabilityOf('safe') < self::SAFE_THRESHOLD) {
-            return Response::text("Not run: the command wasn't confidently classified as safe (verdict: {$risk->choice}). Call `run-command-approved` with the same arguments, so the user can review it.");
+        if ($flagged !== []) {
+            return Response::text('Not run: flagged as '.implode(', ', $flagged).'. Call `run-command-approved` with the same arguments, so the user can review it.');
         }
 
         try {
