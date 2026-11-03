@@ -52,6 +52,7 @@ use App\Mcp\Tools\ProposePlaybookChange;
 use App\Mcp\Tools\RecordPlaybook;
 use App\Mcp\Tools\RequestTool;
 use App\Mcp\Tools\RunCommand;
+use App\Mcp\Tools\RunCommandApproved;
 use App\Mcp\Tools\SearchNethvoiceDocumentation;
 use App\Mcp\Tools\SearchNs8Documentation;
 use App\Mcp\Tools\SearchNsecDocumentation;
@@ -137,6 +138,7 @@ class PointerServer extends Server
         RequestTool::class,
         UpvoteToolRequest::class,
         RunCommand::class,
+        RunCommandApproved::class,
     ];
 
     protected array $prompts = [

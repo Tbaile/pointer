@@ -7,6 +7,9 @@ use App\Models\ToolRequest;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Illuminate\Validation\Rule;
+use Laravel\Ai\Classification;
+use Laravel\Ai\Classification\Choice;
+use Laravel\Ai\Responses\Data\ChoiceAnswer;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
@@ -35,13 +38,15 @@ use Throwable;
     - Never call external services from the machine, and never pass the machine's credentials on the command line.
 
     The output is returned as is: secrets in it are not masked. Avoid commands that print them, like dumping a container's environment or a VPN private key.
+
+    Commands that only read system state run right away. Commands that read sensitive data or change something are refused: call `run-command-approved` with the same arguments, so the user can review them.
     DESCRIPTION)]
 class RunCommand extends Tool
 {
     /**
-     * @var array<string, mixed>|null
+     * Minimum probability of the `safe` verdict to run a command without asking the user.
      */
-    protected ?array $meta = ['anthropic/requiresUserInteraction' => true];
+    private const float SAFE_THRESHOLD = 0.8;
 
     public function __construct(private readonly RemoteExecutor $executor) {}
 
@@ -55,6 +60,24 @@ class RunCommand extends Tool
             'tool_request_id' => ['required', 'integer', Rule::exists(ToolRequest::class, 'id')->withoutTrashed()],
             'command' => ['required', 'string', 'max:1024'],
         ]);
+
+        try {
+            /** @var ChoiceAnswer $risk */
+            $risk = Classification::of($validated['command'])
+                ->question('risk', new Choice('This shell command runs as root on a customer\'s production NethServer 8 or NethSecurity machine. What does it do?', [
+                    'safe' => 'Only reads system state: disk, memory, uptime, processes, service status, filtered logs',
+                    'sensitive' => 'Reads secrets, credentials, keys, environment variables, databases, mailboxes or user data',
+                    'destructive' => 'Writes, deletes, restarts, installs or changes configuration',
+                ]))
+                ->classify()
+                ->answer('risk');
+        } catch (Throwable) {
+            return Response::text('Not run: the command could not be classified. Call `run-command-approved` with the same arguments, so the user can review it.');
+        }
+
+        if ($risk->choice !== 'safe' || $risk->probabilityOf('safe') < self::SAFE_THRESHOLD) {
+            return Response::text("Not run: the command wasn't confidently classified as safe (verdict: {$risk->choice}). Call `run-command-approved` with the same arguments, so the user can review it.");
+        }
 
         try {
             $result = $this->executor->run($validated['sos_id'], $validated['command']);
