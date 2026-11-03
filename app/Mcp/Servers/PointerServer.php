@@ -46,6 +46,7 @@ use App\Mcp\Tools\NethServer\TcpProbe as Ns8TcpProbe;
 use App\Mcp\Tools\NethServer\TlsProbe;
 use App\Mcp\Tools\NethServer\Tracepath;
 use App\Mcp\Tools\NetworkState;
+use App\Mcp\Tools\PacketCapture;
 use App\Mcp\Tools\ProcessList;
 use App\Mcp\Tools\ProposePlaybookChange;
 use App\Mcp\Tools\RecordPlaybook;
@@ -120,6 +121,7 @@ class PointerServer extends Server
         HttpProbe::class,
         TlsProbe::class,
         NetworkState::class,
+        PacketCapture::class,
         StartNodeSupport::class,
         StopNodeSupport::class,
         SearchNsecDocumentation::class,
