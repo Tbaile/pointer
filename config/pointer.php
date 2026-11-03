@@ -48,4 +48,16 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Retention
+    |--------------------------------------------------------------------------
+    |
+    | Days MCP tool calls and command classifications are kept before
+    | model:prune deletes them.
+    |
+    */
+
+    'retention_days' => (int) env('POINTER_RETENTION_DAYS', 365),
+
 ];

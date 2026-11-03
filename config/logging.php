@@ -1,6 +1,5 @@
 <?php
 
-use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -72,14 +71,6 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'max_files' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
-        ],
-
-        'mcp' => [
-            'driver' => 'daily',
-            'path' => storage_path('logs/mcp.log'),
-            'level' => 'info',
-            'max_files' => env('LOG_MCP_DAYS', 90),
-            'formatter' => JsonFormatter::class,
         ],
 
         'monthly' => [
