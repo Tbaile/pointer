@@ -21,6 +21,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
     - An interface with `up` true but `status` `offline` has its link working while every `track_ip` fails: check those targets with `nsec-ping` and `interface`.
     - `policies`: each policy with its members and their traffic `percent`.
     - An empty `interfaces` means MultiWAN is not configured. For the configuration (`track_ip`, `reliability`, thresholds) use `get-uci-config` on `mwan3`, for the events `read-system-log` with `pattern` `mwan3`.
+    Use it instead of `mwan3 status` or `ubus call mwan3 status`.
     DESCRIPTION)]
 class Mwan3Status extends NsApiTool
 {

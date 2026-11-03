@@ -25,6 +25,7 @@ use Throwable;
     - The container name is the `[node:module:<container>]` part of `read-logs` lines.
     - Rootful modules list only the containers named after the module, e.g. `crowdsec1` and `crowdsec1-firewall-bouncer`.
     - Only reaches the modules on the node of the current session: a module on another node returns `Cannot find module <id> in the local node`. `list-modules` shows each module's node; `start-node-support` opens a session on it.
+    Use it instead of `podman ps`, with or without `runagent -m <module>`.
     DESCRIPTION)]
 class ModuleContainers extends Tool
 {

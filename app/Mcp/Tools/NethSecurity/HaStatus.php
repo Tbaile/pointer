@@ -27,6 +27,7 @@ use Throwable;
     - Statistics: `pri_zero_rcvd` above `0` means the peer shut down cleanly; `advert_rcvd` that stays the same between two runs means the peer sends no VRRP adverts.
     - `show-config`: the HA-configured interfaces with device and virtual IP, and the extra virtual IPs.
     - For the `keepalived` and `conntrackd` services use `service-status`, for their history `victoria-query` on `procd_service_running`, for the full config `get-uci-config` on `keepalived`.
+    Use it instead of `ns-ha-config`.
     DESCRIPTION)]
 class HaStatus extends Tool
 {

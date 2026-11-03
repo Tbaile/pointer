@@ -28,6 +28,7 @@ use Throwable;
     - `info`: procd's view as JSON: each instance with `running`, `pid`, `command`, `exit_code` once stopped and the respawn settings.
     - An unknown service returns `Service "<name>" not found:` with `exit_code` `1`.
     - This is the state right now. For history (since when it is down, flapping) use `victoria-query` on `procd_service_running` and `procd_service_exit_code`, labeled by `service` and `instance`.
+    Use it instead of `service <name> status` or `/etc/init.d/<name> status`.
     DESCRIPTION)]
 class ServiceStatus extends Tool
 {

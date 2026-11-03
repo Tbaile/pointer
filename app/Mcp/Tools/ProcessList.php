@@ -27,6 +27,7 @@ use Throwable;
     - `pid` or `name` (exact process name, e.g. `nginx`): only the matching processes, every one. A process whose parent is `1` while its siblings have another parent was orphaned. No match returns an error.
     - `threads`: one row per thread, with its `TID` after `PID`, without `NLWP`; same `sort`, `limit`, `pid` and `name`.
     - On `nethserver`, `USER` of a rootless module container is often a numeric sub-UID, e.g. `241072`.
+    Use it instead of `ps` or `pgrep`.
     DESCRIPTION)]
 class ProcessList extends Tool
 {

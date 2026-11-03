@@ -18,6 +18,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
     Trace the hops from a NethSecurity firewall to a target with UDP probes, one per hop, to find where packets stop.
     `reachable` is true when the last hop answering is the target itself; `output` lists one line per hop with its address and rtt, `*` when that hop did not answer.
     Intermediate routers often ignore probes, so a few `*` lines do not mean the path is broken; the hop after which every line is `*` is where to look.
+    Use it instead of `traceroute`.
     DESCRIPTION)]
 class Traceroute extends NetworkProbeTool
 {

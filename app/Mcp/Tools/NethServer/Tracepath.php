@@ -21,6 +21,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
     - `reachable` is true when the target answered (its line ends with `reached`); `output` lists one line per hop with its address and rtt, `no reply` when that hop did not answer, and the path MTU.
     - Many routers and hosts filter UDP probes, so a path can end in `no reply` lines while the target serves TCP: confirm with `ns8-tcp-probe` or `ns8-http-probe` before calling the path broken.
     - Each unanswered hop takes about 1.5 seconds, so 15 hops of `no reply` take about 25 seconds.
+    Use it instead of `tracepath` or `traceroute`.
     DESCRIPTION)]
 class Tracepath extends NetworkProbeTool
 {

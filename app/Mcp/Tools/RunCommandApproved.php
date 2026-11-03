@@ -23,7 +23,8 @@ use Throwable;
 #[IsIdempotent(false)]
 #[IsOpenWorld(false)]
 #[Description(<<<'DESCRIPTION'
-    Run a shell command on the target machine after the user reviews it. Call this only when `run-command` refused a command, with the same arguments: the user is asked to approve it before it runs.
+    Run a shell command on the target machine after the user reviews it. Call this only when `run-command` refused a command, with the same `command`: the user is asked to approve it before it runs.
+    Pass as `tool_request_id` the request for the capability you are missing: call `search-tool-requests`, then `upvote-tool-request` on the matching request, or `request-tool` when there is none. Each request covers one capability: a command for a different need gets its own request.
     The same rules as `run-command` apply: keep the command short and readable, never write, restart or delete anything unless the user explicitly asked for it, and avoid commands that print secrets.
     DESCRIPTION)]
 class RunCommandApproved extends Tool

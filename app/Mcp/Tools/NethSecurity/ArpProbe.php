@@ -26,6 +26,7 @@ use Throwable;
     - Probing an address that belongs to another host on the link also returns `1` with that host's MAC.
     - An unknown `device` returns `Device <name> not available`.
     - For the neighbour table use `network-state` with `object` `neighbours`.
+    Use it instead of `arping`.
     DESCRIPTION)]
 class ArpProbe extends Tool
 {

@@ -25,6 +25,7 @@ use Throwable;
     - A peer with no `latest handshake` never completed one; a handshake older than about 2 minutes on a busy tunnel means it is down.
     - `interface`: only that interface, e.g. `wg1`. An unknown one returns `Unable to access interface: No such device`.
     - For the handshake and transfer history use `victoria-query` on `wireguard_peer_last_handshake_time_ns`, `wireguard_peer_rx_bytes` and `wireguard_peer_tx_bytes`, labeled by `device` and `public_key`. For the configuration use `get-uci-config` on `network`.
+    Use it instead of `wg show`.
     DESCRIPTION)]
 class WireguardStatus extends Tool
 {

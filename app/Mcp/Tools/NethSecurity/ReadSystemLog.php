@@ -29,6 +29,7 @@ use Throwable;
     - Returns the last `lines` matching lines, 100 by default. Narrow the `pattern` rather than raising `lines`.
     - `source` `memory` (default): the log kept in RAM, lost on reboot, only the current file and one rotated copy. `storage`: the log kept on the data storage for a year, empty when no data storage is configured. It scans every rotated file, so anchor the `pattern` on the date, e.g. `^Oct +9 `.
     - Passwords inside URLs (`https://<user>:<password>@...`) are masked.
+    Use it instead of `logread`, `dmesg`, or `grep` and `zcat` on `/var/log/messages` and `/mnt/data/log/messages*`.
     DESCRIPTION)]
 class ReadSystemLog extends Tool
 {

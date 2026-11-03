@@ -17,6 +17,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 #[Description(<<<'DESCRIPTION'
     Open a TCP connection from a NethSecurity firewall to a port of a target and close it at once, without sending data.
     `reachable` is true when the connection was accepted; otherwise `output` tells `Connection refused` (the host answered, nothing listens or a firewall rejects) from `Operation timed out` (packets dropped along the way or by the host).
+    Use it instead of `nc -z` or `netcat -z`.
     DESCRIPTION)]
 class TcpProbe extends NetworkProbeTool
 {

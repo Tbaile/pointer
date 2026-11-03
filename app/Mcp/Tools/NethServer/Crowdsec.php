@@ -29,6 +29,7 @@ use Throwable;
     - `bouncers`: the bouncers pulling decisions, with `last_pull`. An old `last_pull` means bans are no longer applied to the firewall.
     - `metrics`: lines read and parsed per log source, alerts and decisions per scenario, as tables.
     - The CrowdSec settings (e.g. ban time, whitelisted networks): `module-environment`. Its logs: `read-logs`.
+    Use it instead of `cscli` in the CrowdSec container.
     DESCRIPTION)]
 class Crowdsec extends Tool
 {

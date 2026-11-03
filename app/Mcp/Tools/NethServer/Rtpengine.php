@@ -26,6 +26,7 @@ use Throwable;
     - `session` with `call_id`: one call. A header (`callid`, `created`, `proxy`), then per leg `--- Tag '<tag>', type: ..., callduration <s>` and its media, one line per stream: `-------- Port <local address>:<port> <> <remote address>:<port>, SSRC <hex>, <n> p, <n> b, <n> e, <unix time> ts`, i.e. packets, bytes and errors received from the remote side and the time of the last one. A stream at `0 p` or with an old `ts` while the call is up is the direction with no audio; a remote private address on a phone behind NAT points at the address it advertises.
     - Report the legs as `leg-A`, `leg-B`: don't repeat the Call-ID, the tags or the remote addresses.
     - `Call ID not found` means the call ended or its media never went through the proxy.
+    Use it instead of `rtpengine-ctl list` in the `rtpengine` container.
     DESCRIPTION)]
 class Rtpengine extends Tool
 {

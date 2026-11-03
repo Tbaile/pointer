@@ -21,6 +21,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
     - `reachable` is true when at least one reply came back; `output` has the per-packet replies and the loss/rtt summary, or the reason no packet was sent (e.g. `Name or service not known`, exit code 2).
     - A host may drop ICMP while serving TCP: confirm a negative with `ns8-tcp-probe` on a port it should serve, and locate where packets stop with `ns8-tracepath`.
     - To find the path MTU, send `size` with `dont_fragment` and lower it until replies come back: `size` 1472 fills a 1500-byte IPv4 packet.
+    Use it instead of `ping`.
     DESCRIPTION)]
 class Ping extends NetworkProbeTool
 {

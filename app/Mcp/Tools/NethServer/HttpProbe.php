@@ -27,6 +27,7 @@ use Throwable;
     - `reachable` is true when an HTTP answer came back, whatever its status; `output` is the status code and the address connected to, e.g. `301 35.214.216.68`.
     - Otherwise `output` has the curl error and `000`, e.g. `curl: (6) Could not resolve host`, `(7) Failed to connect`, `(28)` timeout after 10 seconds, `(60)` untrusted certificate.
     - Redirects are not followed: a `301`/`302` is an answer.
+    Use it instead of `curl` or `wget` to a URL.
     DESCRIPTION)]
 class HttpProbe extends Tool
 {

@@ -27,6 +27,7 @@ use Throwable;
     - Without `group_by`: the first `limit` entries, then `<n> entries matched`.
     - `group_by` `src`, `dst` or `dport`: `<count> <value>` for the top `limit` values, then `<n> entries matched, <m> distinct values`. E.g. `group_by` `src` finds the LAN host flooding the table.
     - This is the table right now. For history use `victoria-query` on `conntrack_ip_conntrack_count` and `conntrack_ip_conntrack_max`.
+    Use it instead of `conntrack -L`.
     DESCRIPTION)]
 class ConntrackList extends Tool
 {

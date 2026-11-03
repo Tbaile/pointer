@@ -39,6 +39,7 @@ use Throwable;
     Times are RFC3339 or unix seconds, relative offsets such as `-1h` are rejected. Result timestamps are unix seconds UTC: convert them to the node's local time before comparing with `read-logs`.
     A series that stops, or repeats the same value for 5 minutes, marks when the node stopped answering, e.g. before a freeze.
     Keep range queries narrow (short span, coarse step, aggregated series): responses over the output cap are rejected.
+    Use it instead of `curl` to the Prometheus API.
     DESCRIPTION)]
 class PrometheusQuery extends Tool
 {

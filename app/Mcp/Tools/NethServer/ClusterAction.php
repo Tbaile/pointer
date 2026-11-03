@@ -29,6 +29,7 @@ use Throwable;
     - `list-alerts`: alerts currently firing in the cluster.
     - `list-backups`: configured backups and the module instances not included in any.
     - Who ran an action and when, including the ones that changed these settings: `audit-log`.
+    Use it instead of `api-cli run cluster/<action>`, for the actions listed above.
     DESCRIPTION)]
 class ClusterAction extends Tool
 {

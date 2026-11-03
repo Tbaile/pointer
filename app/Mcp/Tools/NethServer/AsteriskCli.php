@@ -29,6 +29,7 @@ use Throwable;
     - `pjsip list contacts`: how many registered contacts are in each status (`Avail`, `Unavail`, `NonQual`, `Unknown`), never their addresses.
     - `Cannot find module <id> in the local node`: the instance runs on another node, see `list-modules` and `start-node-support`.
     - Containers and restarts of the instance: `module-containers`. Its logs: `read-logs`.
+    Use it instead of `asterisk -rx` in the `freepbx` container, for the commands listed above.
     DESCRIPTION)]
 class AsteriskCli extends Tool
 {

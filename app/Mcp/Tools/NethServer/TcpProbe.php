@@ -21,6 +21,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
     - `reachable` is true when the connection was accepted (exit code 0, empty `output`).
     - Exit code 1 with `Connection refused`: the host answered, nothing listens or a firewall rejects. With `Name or service not known`: the name does not resolve.
     - Exit code 124 with empty `output`: no answer within 3 seconds, packets dropped along the way or by the host.
+    Use it instead of `nc -z`, `telnet` or `/dev/tcp`.
     DESCRIPTION)]
 class TcpProbe extends NetworkProbeTool
 {

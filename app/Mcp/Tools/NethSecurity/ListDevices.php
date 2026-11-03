@@ -10,7 +10,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 #[Title('List Network Devices')]
 #[IsReadOnly]
 #[IsOpenWorld(false)]
-#[Description('List the network devices of a NethSecurity firewall by zone, with their addresses, link state, interface configuration and traffic stats.')]
+#[Description('List the network devices of a NethSecurity firewall by zone, with their addresses, link state, interface configuration and traffic stats. Use it instead of `ip link` or `ubus call ns.devices list-devices`.')]
 class ListDevices extends NsApiTool
 {
     protected string $path = 'ns.devices';

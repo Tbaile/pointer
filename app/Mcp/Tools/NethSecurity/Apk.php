@@ -32,6 +32,7 @@ use Throwable;
     - `fields`: `name` and `version` by default. `scripts` lists the package's install/upgrade scripts by name, `contents` its files (large on many packages), `status` whether it is installed.
     - `upgradable` and `available` read the cached index: run `update` first to compare with what the repository offers right now.
     - `update` downloads the repository index. It prints nothing and returns `exit_code` `0` on success; on failure the output names the unreachable repository.
+    Use it instead of `apk info`, `apk list`, `apk query` or `apk update`.
     DESCRIPTION)]
 class Apk extends Tool
 {

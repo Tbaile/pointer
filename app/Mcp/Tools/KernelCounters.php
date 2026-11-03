@@ -27,6 +27,7 @@ use Throwable;
     - `affinity`: `rps_cpus` of each NIC receive queue (hex CPU mask) and `smp_affinity_list` of each IRQ (CPU list).
     - `cmdline` (kernel command line, e.g. `console=ttyS0,115200`), `consoles` (registered consoles) and `printk` (console, default, minimum and boot log levels: a first value of `7` sends warnings to the console).
     - For CPU time over time use `victoria-query` on `cpu_usage_softirq` and `cpu_usage_irq`, labeled by `cpu`: it has the share per CPU, not the breakdown by type or IRQ.
+    Use it instead of `cat` on `/proc/softirqs`, `/proc/interrupts`, `/proc/cmdline`, `/proc/consoles`, `/proc/sys/kernel/printk` or the `rps_cpus` and `smp_affinity_list` files.
     DESCRIPTION)]
 class KernelCounters extends Tool
 {

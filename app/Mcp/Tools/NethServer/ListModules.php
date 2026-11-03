@@ -25,6 +25,7 @@ use Throwable;
     - One row per instance: `ID` (e.g. `webtop3`, the `name` for `module-containers`, `module-environment` and `read-logs`), `MODULE`, `VERSION`, `NODE` (node id) and `FLAGS`.
     - `FLAGS` lists `rootless` for modules running under their own user; without it the module is rootful. `core_module` marks the ones shipped with the core.
     - `module-containers` and `module-environment` only reach the modules on the node of the current session; for another `NODE` open its session with `start-node-support`.
+    Use it instead of `api-cli run cluster/list-installed-modules`.
     DESCRIPTION)]
 class ListModules extends Tool
 {

@@ -24,6 +24,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
     - `Could not find certificate`: no TLS answer within 8 seconds, a refused port or a service that does not speak TLS. `ns8-tcp-probe` tells these apart.
     - `starttls` for services that start in clear text and upgrade, e.g. `smtp` on 25 or 587, `imap` on 143, `pop3` on 110, `sieve` on 4190, `ldap` on 389. Leave it out on ports that speak TLS from the start (443, 465, 993, 995, 636, 5061).
     - What Traefik holds for a name: `module-action` `get-certificate` on the Traefik module.
+    Use it instead of `openssl s_client`.
     DESCRIPTION)]
 class TlsProbe extends NetworkProbeTool
 {

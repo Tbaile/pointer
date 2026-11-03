@@ -18,7 +18,7 @@ use Throwable;
 #[Title('Identify Product')]
 #[IsReadOnly]
 #[IsOpenWorld(false)]
-#[Description('Identify which product the target machine runs.')]
+#[Description('Identify which product the target machine runs. Use it instead of `cat /etc/os-release`.')]
 class WhatIsIt extends Tool
 {
     public function __construct(private readonly RemoteExecutor $executor) {}

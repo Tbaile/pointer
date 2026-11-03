@@ -24,6 +24,7 @@ use Throwable;
 
     - Skew is the machine's clock minus Pointer's, in seconds: positive means the machine is ahead. A skew within the round trip is just the call's latency.
     - A skew of minutes or more breaks TLS certificate checks, TOTP codes, Kerberos/Samba logins and log correlation.
+    Use it instead of `date`.
     DESCRIPTION)]
 class SystemTime extends Tool
 {

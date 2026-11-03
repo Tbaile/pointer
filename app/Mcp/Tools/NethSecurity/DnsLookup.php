@@ -27,6 +27,7 @@ use Throwable;
     - `resolved` is true when the name has at least one address; exit code 1 with `server can't find <name>: NXDOMAIN` means it does not exist.
     - `output` lists the IPv4 and IPv6 addresses after `Non-authoritative answer:`.
     - Local records come from the `dhcp` config (`get-uci-config {"config": "dhcp"}`, `domain` and `host` sections). Upstream servers are the `server` list of the `dnsmasq` section, or the ones learned from the WAN when it is empty.
+    Use it instead of `nslookup <name>`.
     DESCRIPTION)]
 class DnsLookup extends Tool
 {

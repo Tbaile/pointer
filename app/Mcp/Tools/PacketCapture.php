@@ -30,6 +30,7 @@ use Throwable;
     - `decode` adds the decoded protocol fields (`-vv`), e.g. DHCP options, DNS answers or IKE exchanges. It also prints application content such as SIP or HTTP headers, credentials included: decode only when the header lines can't answer, and narrow the `filter` to the packets you need.
     - `stop` ends the capture and removes it, so `read` what you need first. Captures are removed an hour after their last packet anyway.
     - tcpdump sees packets before nftables drops them on the way in and after NAT on the way out.
+    Use it instead of `tcpdump`.
     DESCRIPTION)]
 class PacketCapture extends Tool
 {

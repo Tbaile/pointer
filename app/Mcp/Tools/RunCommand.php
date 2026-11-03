@@ -4,10 +4,8 @@ namespace App\Mcp\Tools;
 
 use App\Contracts\RemoteExecutor;
 use App\Events\CommandClassified;
-use App\Models\ToolRequest;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
-use Illuminate\Validation\Rule;
 use Laravel\Ai\Classification;
 use Laravel\Ai\Classification\Boolean;
 use Laravel\Ai\Responses\Data\BooleanAnswer;
@@ -28,7 +26,7 @@ use Throwable;
 #[IsOpenWorld(false)]
 #[Description(<<<'DESCRIPTION'
     Run a shell command directly on the target machine, as a privileged user. This is a full-fledged command on a customer's production machine: there is no sandbox, and anything it changes is changed for real.
-    Use it only as a last resort, when no other tool can answer. Call `search-tool-requests` first, then `upvote-tool-request` on the request for the capability you are missing, or `request-tool` when there is none, and pass that request's id as `tool_request_id`. Each request covers one capability: a command for a different need gets its own request.
+    Use it only as a last resort, when no other tool can answer: each tool's description names the commands it replaces.
 
     Keep the command as simple as possible, so a person can read it at a glance:
     - Fine: one command, optionally piped into a filter, e.g. `logread | grep openvpn`.
@@ -40,7 +38,7 @@ use Throwable;
 
     The output is returned as is: secrets in it are not masked. Avoid commands that print them, like dumping a container's environment or a VPN private key.
 
-    Commands that only read system state run right away. Commands that change files, settings, services, packages or databases, or that print secrets or users' data, are refused: call `run-command-approved` with the same arguments, so the user can review them.
+    Commands that only read system state run right away. Commands that change files, settings, services, packages or databases, or that print secrets or users' data, are refused: they go through `run-command-approved`, so the user can review them.
     DESCRIPTION)]
 class RunCommand extends Tool
 {
@@ -48,6 +46,11 @@ class RunCommand extends Tool
      * Probability of any risk at or above which the command needs the user's approval.
      */
     private const float RISK_THRESHOLD = 0.3;
+
+    /**
+     * What a refused command needs before it can go through `run-command-approved`.
+     */
+    private const string APPROVAL_STEPS = 'Call `search-tool-requests`, then `upvote-tool-request` on the request for the capability you are missing, or `request-tool` when there is none. Then call `run-command-approved` with the same `command` and that request\'s id as `tool_request_id`, so the user can review it.';
 
     public function __construct(private readonly RemoteExecutor $executor) {}
 
@@ -58,7 +61,6 @@ class RunCommand extends Tool
     {
         $validated = $request->validate([
             'sos_id' => ['required', 'string'],
-            'tool_request_id' => ['required', 'integer', Rule::exists(ToolRequest::class, 'id')->withoutTrashed()],
             'command' => ['required', 'string', 'max:1024'],
         ]);
 
@@ -110,7 +112,7 @@ class RunCommand extends Tool
         } catch (Throwable $exception) {
             CommandClassified::dispatch($validated['sos_id'], $request->user(), $validated['command'], error: $exception->getMessage());
 
-            return Response::text('Not run: the command could not be classified. Call `run-command-approved` with the same arguments, so the user can review it.');
+            return Response::text('Not run: the command could not be classified. '.self::APPROVAL_STEPS);
         }
 
         $flagged = array_keys(array_filter($probabilities, fn (float $probability): bool => $probability >= self::RISK_THRESHOLD));
@@ -118,7 +120,7 @@ class RunCommand extends Tool
         CommandClassified::dispatch($validated['sos_id'], $request->user(), $validated['command'], $classification, $probabilities, $flagged);
 
         if ($flagged !== []) {
-            return Response::text('Not run: flagged as '.implode(', ', $flagged).'. Call `run-command-approved` with the same arguments, so the user can review it.');
+            return Response::text('Not run: flagged as '.implode(', ', $flagged).'. '.self::APPROVAL_STEPS);
         }
 
         try {
@@ -144,9 +146,6 @@ class RunCommand extends Tool
         return [
             'sos_id' => $schema->string()
                 ->description('The SOS id of the target machine.')
-                ->required(),
-            'tool_request_id' => $schema->integer()
-                ->description('The id of the tool request for the missing capability, from `search-tool-requests` or `request-tool`.')
                 ->required(),
             'command' => $schema->string()
                 ->description('One readable command line; a single pipe is fine, scripts are not.')

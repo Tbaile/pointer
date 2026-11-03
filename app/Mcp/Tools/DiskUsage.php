@@ -26,6 +26,7 @@ use Throwable;
     - `tmpfs` lives in RAM: on `nethsecurity`, `/tmp` (also `/var`, with the logs and, without data storage, the VictoriaMetrics data) fills memory as it grows. `/mnt/data` is the data storage.
     - On `nethserver`, the per-container mounts under `/var/lib/containers` are left out.
     - For usage over time use `victoria-query` on `disk_used` and `disk_used_percent`, labeled by `path` (on `nethsecurity` only `/`, `/boot` and `/mnt/data`).
+    Use it instead of `df`.
     DESCRIPTION)]
 class DiskUsage extends Tool
 {

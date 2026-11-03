@@ -29,6 +29,7 @@ use Throwable;
     - `node` is the node id, as in the `NODE` column of `list-modules`.
     - It opens a support VPN and grants support access on that node. If the session is already running, the same `session_id` is returned.
     - The session ends by itself after 24 hours. Close it with `stop-node-support` when the investigation is over.
+    Use it instead of `api-cli run node/<id>/start-support-session`.
     DESCRIPTION)]
 class StartNodeSupport extends Tool
 {

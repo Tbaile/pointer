@@ -26,6 +26,7 @@ use Throwable;
     - `service`: the ports behind a service name listed in a zone, e.g. `nethsecurity-controller1` is `20001/udp`. Modules open their ports as a service named after the instance.
     - An unknown zone or service returns `INVALID_ZONE` or `INVALID_SERVICE`.
     - CrowdSec bans are not firewalld rules: check an address with `crowdsec` `decisions`. For the addresses, routes and listening sockets use `network-state`.
+    Use it instead of `firewall-cmd`.
     DESCRIPTION)]
 class FirewallStatus extends Tool
 {

@@ -26,6 +26,7 @@ use Throwable;
     - `table`, `chain`, `set`: one object, by `family`, `table` and, for `chain` and `set`, `name`. E.g. `inet` `banIP` `_inbound` for Threat Shield IP's inbound drops.
     - Rules read like `ip saddr @blocklist.v4 counter packets 12 bytes 720 drop`: the counter tells how many packets the rule matched since it was loaded.
     - Set elements are left out: sets can hold hundreds of thousands of them. Pass `elements` with `object` `set` to read them.
+    Use it instead of `nft list`.
     DESCRIPTION)]
 class NftList extends Tool
 {

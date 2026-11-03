@@ -24,6 +24,7 @@ use Throwable;
     - Holds the module's own settings: `MODULE_ID`, `NODE_ID`, `IMAGE_URL`, the image of each container (`*_IMAGE`), the allocated `TCP_PORT`/`TCP_PORTS` and the module-specific keys.
     - The other state files, with passwords and tokens, are not read.
     - Only reaches the modules on the node of the current session: a module on another node returns `Cannot find module <id> in the local node`. `list-modules` shows each module's node; `start-node-support` opens a session on it.
+    Use it instead of `runagent -m <module> cat environment`.
     DESCRIPTION)]
 class ModuleEnvironment extends Tool
 {

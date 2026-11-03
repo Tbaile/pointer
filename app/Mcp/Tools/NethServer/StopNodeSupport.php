@@ -26,6 +26,7 @@ use Throwable;
     - Run it on the leader's `sos_id`, with the `node` id passed to `start-node-support`.
     - It closes the support VPN and revokes support access on that node: its `session_id` stops working.
     - Never stop the node of the session the user gave: that cuts off every further command.
+    Use it instead of `api-cli run node/<id>/stop-support-session`.
     DESCRIPTION)]
 class StopNodeSupport extends Tool
 {

@@ -10,7 +10,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 #[Title('List UCI Configurations')]
 #[IsReadOnly]
 #[IsOpenWorld(false)]
-#[Description('List the names of the UCI configurations present on a NethSecurity firewall, to be read with the GetUciConfig tool.')]
+#[Description('List the names of the UCI configurations present on a NethSecurity firewall, to be read with the GetUciConfig tool. Use it instead of `ls /etc/config`.')]
 class ListUciConfigs extends NsApiTool
 {
     protected string $path = 'uci';

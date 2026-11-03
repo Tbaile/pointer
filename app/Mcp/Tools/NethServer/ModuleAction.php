@@ -32,6 +32,7 @@ use Throwable;
     - NethVoice module: `get-ports-list`, the ports allocated to the instance. Mail module: `list-domains`.
     - `Validation errors` lists the `data` fields the action expects. `Client "module/<id>" was not found` means no such instance.
     - Logs of the module: `read-logs`. Its containers: `module-containers`. Who ran which action: `audit-log`.
+    Use it instead of `api-cli run module/<module>/<action>`, for the actions listed above.
     DESCRIPTION)]
 class ModuleAction extends Tool
 {

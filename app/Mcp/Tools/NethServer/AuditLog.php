@@ -26,6 +26,7 @@ use Throwable;
     - One line per entry, newest first: `TIMESTAMP` (UTC), `USER` (an admin, or `module/<id>` for a module's own calls), `EVENT` (`create-task` or `login-ok`), `TASK` (the action run, e.g. `alter-repository`), `QUEUE` (`cluster/tasks`, `module/<id>/tasks` or `node/<id>/tasks`) and `DATA` (the action input as JSON, secrets masked).
     - `task` is a regex on the action, e.g. `(add|alter|remove)-repository|set-subscription`; `user` an exact user; `since` a date.
     - Actions run with `api-cli` from a shell, scripts that call other actions, and direct Redis edits leave no entry here; use `read-logs` for those.
+    Use it instead of `sqlite3` on `/var/lib/nethserver/api-server/audit.db`.
     DESCRIPTION)]
 class AuditLog extends Tool
 {

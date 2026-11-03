@@ -27,6 +27,7 @@ use Throwable;
     - A path that does not exist is listed at the end as `find: ‘<path>’: No such file or directory`.
     - `aggregate`: one hash over every file instead, the same as `find <paths> -type f -exec md5sum {} + | LC_ALL=C sort -k2 | md5sum`. Run the same command on the reference to compare whole trees at once. Size and time are not part of it.
     - `algorithm`: `md5` (default) or `sha256`.
+    Use it instead of `ls -l`, `stat`, `find` or `md5sum`/`sha256sum` on files.
     DESCRIPTION)]
 class FileChecksums extends Tool
 {

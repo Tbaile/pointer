@@ -27,6 +27,7 @@ use Throwable;
     - `resolved` is true when the name has at least one address; exit code 2 means it does not resolve.
     - `output` lists every IPv4 and IPv6 address, each one three times (`STREAM`, `DGRAM`, `RAW`); the name is on the first line.
     - Compare the addresses with the node's public address in `network-state` to check a hostname points to this node.
+    Use it instead of `getent`, `nslookup`, `dig` or `host`.
     DESCRIPTION)]
 class DnsLookup extends Tool
 {
