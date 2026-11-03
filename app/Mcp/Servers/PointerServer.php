@@ -56,6 +56,7 @@ use App\Mcp\Tools\SearchNs8Documentation;
 use App\Mcp\Tools\SearchNsecDocumentation;
 use App\Mcp\Tools\SearchPlaybooks;
 use App\Mcp\Tools\SearchToolRequests;
+use App\Mcp\Tools\SystemTime;
 use App\Mcp\Tools\UpvotePlaybook;
 use App\Mcp\Tools\UpvoteToolRequest;
 use App\Mcp\Tools\WhatIsIt;
@@ -100,6 +101,7 @@ class PointerServer extends Server
         DiskUsage::class,
         FileChecksums::class,
         KernelCounters::class,
+        SystemTime::class,
         ReadLogs::class,
         ListModules::class,
         ModuleContainers::class,
