@@ -28,7 +28,7 @@ class McpActivity extends Page implements HasTable
 
     protected static ?string $slug = 'mcp-activity';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 5;
 
     public static function canAccess(): bool
     {
