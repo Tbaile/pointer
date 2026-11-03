@@ -2,9 +2,10 @@
 
 use App\Contracts\RemoteExecutor;
 use App\Mcp\Tools\RunCommand;
+use App\Models\CommandClassification;
 use App\Models\ToolRequest;
+use App\Models\User;
 use App\Services\Remote\CommandResult;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Laravel\Ai\Classification;
 use Laravel\Ai\Responses\ClassificationResponse;
@@ -15,6 +16,8 @@ use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Tests\Fakes\FakeRemoteExecutor;
+
+use function Pest\Laravel\actingAs;
 
 /**
  * @param  array<string, mixed>  $arguments
@@ -121,38 +124,48 @@ test('it refuses a risk at the threshold without running it', function () {
     expect($executor->calledWithCommand)->toBeNull();
 });
 
-test('it logs the classification and token usage', function () {
+test('it records the classification and token usage', function () {
     Classification::fake([new ClassificationResponse(
-        riskAnswers(['writes_files' => 0.0]),
+        riskAnswers(['writes_files' => 0.02, 'prints_secrets' => 0.5]),
         new TextUsage(392, 41),
         new Meta('typesafe', 'jev-1.14.0'),
     )]);
-    $logger = Mockery::spy();
-    Log::shouldReceive('channel')->with('mcp')->andReturn($logger);
     $toolRequest = ToolRequest::factory()->create();
 
     runCommand(new FakeRemoteExecutor(new CommandResult('')), ['tool_request_id' => $toolRequest->id, 'command' => 'df -h']);
 
-    $logger->shouldHaveReceived('info')->with('run-command/classification', [
-        'sos_id' => 'a1b2c3d4-0000-0000-0000-000000000000',
-        'command' => 'df -h',
-        'flagged' => [],
-        'probabilities' => [
-            'writes_files' => 0.0,
-            'changes_settings' => 0.01,
-            'affects_services' => 0.01,
-            'changes_packages' => 0.01,
-            'writes_database' => 0.01,
-            'prints_secrets' => 0.01,
-            'prints_user_data' => 0.01,
-        ],
-        'model' => 'jev-1.14.0',
-        'input_tokens' => 392,
-        'output_tokens' => 41,
-    ])->once();
+    $record = CommandClassification::sole();
+    expect($record->sos_id)->toBe('a1b2c3d4-0000-0000-0000-000000000000');
+    expect($record->user_id)->toBeNull();
+    expect($record->command)->toBe('df -h');
+    expect($record->flagged)->toBe(['prints_secrets']);
+    expect($record->probabilities)->toBe([
+        'writes_files' => 0.02,
+        'changes_settings' => 0.01,
+        'affects_services' => 0.01,
+        'changes_packages' => 0.01,
+        'writes_database' => 0.01,
+        'prints_secrets' => 0.5,
+        'prints_user_data' => 0.01,
+    ]);
+    expect($record->model)->toBe('jev-1.14.0');
+    expect($record->input_tokens)->toBe(392);
+    expect($record->output_tokens)->toBe(41);
+    expect($record->error)->toBeNull();
 });
 
-test('it refuses the command when the classification fails', function () {
+test('it records the user requesting the command', function () {
+    Classification::fake([riskAnswers()]);
+    $user = User::factory()->create();
+    actingAs($user);
+    $toolRequest = ToolRequest::factory()->create();
+
+    runCommand(new FakeRemoteExecutor(new CommandResult('')), ['tool_request_id' => $toolRequest->id, 'command' => 'uptime']);
+
+    expect(CommandClassification::sole()->user_id)->toBe($user->id);
+});
+
+test('it refuses the command when the classification fails and records the error', function () {
     Classification::fake(fn () => throw new RuntimeException('Unauthorized'));
     $toolRequest = ToolRequest::factory()->create();
     $executor = new FakeRemoteExecutor(new CommandResult(''));
@@ -161,4 +174,10 @@ test('it refuses the command when the classification fails', function () {
 
     expect((string) $result->content())->toBe('Not run: the command could not be classified. Call `run-command-approved` with the same arguments, so the user can review it.');
     expect($executor->calledWithCommand)->toBeNull();
+
+    $record = CommandClassification::sole();
+    expect($record->command)->toBe('df -h');
+    expect($record->probabilities)->toBeNull();
+    expect($record->model)->toBeNull();
+    expect($record->error)->toBe('Unauthorized');
 });

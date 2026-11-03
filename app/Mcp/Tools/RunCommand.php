@@ -3,10 +3,10 @@
 namespace App\Mcp\Tools;
 
 use App\Contracts\RemoteExecutor;
+use App\Events\CommandClassified;
 use App\Models\ToolRequest;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Laravel\Ai\Classification;
 use Laravel\Ai\Classification\Boolean;
@@ -107,21 +107,15 @@ class RunCommand extends Tool
                 ->ensure(BooleanAnswer::class)
                 ->map->probability
                 ->all();
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            CommandClassified::dispatch($validated['sos_id'], $request->user(), $validated['command'], error: $exception->getMessage());
+
             return Response::text('Not run: the command could not be classified. Call `run-command-approved` with the same arguments, so the user can review it.');
         }
 
         $flagged = array_keys(array_filter($probabilities, fn (float $probability): bool => $probability >= self::RISK_THRESHOLD));
 
-        Log::channel('mcp')->info('run-command/classification', [
-            'sos_id' => $validated['sos_id'],
-            'command' => $validated['command'],
-            'flagged' => $flagged,
-            'probabilities' => $probabilities,
-            'model' => $classification->meta->model,
-            'input_tokens' => $classification->usage->inputTokens,
-            'output_tokens' => $classification->usage->outputTokens,
-        ]);
+        CommandClassified::dispatch($validated['sos_id'], $request->user(), $validated['command'], $classification, $probabilities, $flagged);
 
         if ($flagged !== []) {
             return Response::text('Not run: flagged as '.implode(', ', $flagged).'. Call `run-command-approved` with the same arguments, so the user can review it.');
