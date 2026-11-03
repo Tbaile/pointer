@@ -13,11 +13,12 @@ if [ -n "$POINTER_SUPPORT_PORT" ]; then
     printf 'Host %s\n    Port %s\n' "$POINTER_SUPPORT_HOST" "$POINTER_SUPPORT_PORT" > ~/.ssh/config
 fi
 
-# Setup runs only when starting the web server (default CMD starts with --config)
+# Migrations run only when starting the web server (default CMD starts with --config)
 if [ "${1#-}" != "$1" ]; then
     php artisan migrate --force
     php artisan db:seed --force
-    php artisan optimize
 fi
+
+php artisan optimize
 
 exec docker-php-entrypoint "$@"
