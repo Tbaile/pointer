@@ -2,20 +2,32 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Resources\Users\UserResource;
+use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\EmbeddedTable;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
+use Laravel\Passport\Token;
 
-class McpSetup extends Page
+class McpSetup extends Page implements HasTable
 {
+    use InteractsWithTable;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCommandLine;
 
     protected static ?string $slug = 'mcp-setup';
@@ -38,6 +50,13 @@ class McpSetup extends Page
 
         return $schema
             ->components([
+                Section::make(__('Prompt'))
+                    ->description(__('Pointer serves this prompt as Diagnose Machine, it tells the agent how to run the investigation. Some clients, like ChatGPT, can\'t load prompts from an MCP server: if yours doesn\'t offer Diagnose Machine, paste this as your first message, followed by the SOS id and the problem.'))
+                    ->collapsible()
+                    ->collapsed()
+                    ->schema([
+                        $this->snippet('prompt', view('prompts.mcp.pointer')->render(), 'text'),
+                    ]),
                 Tabs::make('Clients')
                     ->tabs([
                         Tab::make('Claude Code')
@@ -93,14 +112,62 @@ class McpSetup extends Page
                                 $this->snippet('vsCodeConfig', $this->json(['servers' => ['pointer' => ['type' => 'http', 'url' => $url]]], pretty: true), 'json'),
                             ]),
                     ]),
-                Section::make(__('Prompt'))
-                    ->description(__('Pointer serves this prompt as Diagnose Machine, it tells the agent how to run the investigation. Some clients, like ChatGPT, can\'t load prompts from an MCP server: if yours doesn\'t offer Diagnose Machine, paste this as your first message, followed by the SOS id and the problem.'))
-                    ->collapsible()
-                    ->collapsed()
+                Section::make(__('Automated agent'))
+                    ->description(__('For scripts and scheduled agents that run with no one at the keyboard. Create a token, then send it in the Authorization header. Sessions with a token never wait for approval: commands that need it are refused, and the playbook writes are not offered.'))
                     ->schema([
-                        $this->snippet('prompt', view('prompts.mcp.pointer')->render(), 'text'),
+                        $this->snippet('agentClaudeCode', "claude mcp add --transport http --scope user pointer {$url} --header \"Authorization: Bearer <token>\"", 'shell'),
+                        EmbeddedTable::make(),
                     ]),
             ]);
+    }
+
+    public function table(Table $table): Table
+    {
+        /** @var User $user */
+        $user = auth()->user();
+
+        return $table
+            ->heading(__('Your agent tokens'))
+            ->query($user->agentTokens()->getQuery())
+            ->defaultSort('created_at', 'desc')
+            ->columns([
+                TextColumn::make('name'),
+                TextColumn::make('created_at')
+                    ->label(__('Created'))
+                    ->dateTime('Y-m-d H:i'),
+                TextColumn::make('expires_at')
+                    ->label(__('Expires'))
+                    ->dateTime('Y-m-d H:i'),
+                IconColumn::make('revoked')
+                    ->boolean(),
+            ])
+            ->headerActions([
+                Action::make('createAgentToken')
+                    ->label(__('Create token'))
+                    ->schema([
+                        TextInput::make('name')
+                            ->helperText(__('What the agent does, so you can tell your tokens apart.'))
+                            ->required()
+                            ->maxLength(255),
+                    ])
+                    ->action(function (array $data) use ($user): void {
+                        $this->replaceMountedAction('showAgentToken', ['token' => $user->createToken($data['name'])->accessToken]);
+                    }),
+            ])
+            ->recordActions([
+                Action::make('revoke')
+                    ->label(__('Revoke'))
+                    ->icon(Heroicon::OutlinedNoSymbol)
+                    ->color('danger')
+                    ->hidden(fn (Token $record): bool => $record->revoked)
+                    ->requiresConfirmation()
+                    ->action(fn (Token $record): bool => $record->revoke()),
+            ]);
+    }
+
+    public function showAgentTokenAction(): Action
+    {
+        return UserResource::showAgentTokenAction();
     }
 
     private function snippet(string $name, string $code, string $language): TextEntry

@@ -9,12 +9,17 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Laravel\Passport\AccessToken;
+use Laravel\Passport\Client;
 use Laravel\Passport\Contracts\OAuthenticatable;
 use Laravel\Passport\HasApiTokens;
+use Laravel\Passport\Passport;
+use Laravel\Passport\Token;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -67,6 +72,31 @@ class User extends Authenticatable implements FilamentUser, OAuthenticatable
     public function canAccessPanel(Panel $panel): bool
     {
         return true;
+    }
+
+    /**
+     * The personal access tokens issued to automated agents acting as this user.
+     *
+     * @return HasMany<Token, $this>
+     */
+    public function agentTokens(): HasMany
+    {
+        $personalAccessClientIds = Passport::client()->newQuery()->get()
+            ->filter(fn (Client $client): bool => $client->hasGrantType('personal_access'))
+            ->modelKeys();
+
+        return $this->hasMany(Token::class)->whereIn('client_id', $personalAccessClientIds);
+    }
+
+    /**
+     * True when the current token is a personal access token, so no one is there to answer prompts.
+     */
+    public function isHeadless(): bool
+    {
+        $token = $this->token();
+
+        return $token instanceof AccessToken
+            && Passport::client()->newQuery()->find($token->oauth_client_id)?->hasGrantType('personal_access') === true;
     }
 
     /**

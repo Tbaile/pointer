@@ -2,6 +2,7 @@
 
 use App\Enums\Role;
 use App\Models\User;
+use Laravel\Passport\ClientRepository;
 use Laravel\Passport\Passport;
 
 use function Pest\Laravel\postJson;
@@ -55,6 +56,30 @@ test('a technician cannot call record-playbook', function () {
         'method' => 'tools/call',
         'params' => ['name' => 'record-playbook', 'arguments' => []],
     ])->assertJsonPath('error.message', 'Tool [record-playbook] not found.');
+});
+
+test('a personal access token hides the tools that wait for a person', function () {
+    $client = app(ClientRepository::class)->createPersonalAccessGrantClient('Agents', 'users');
+    Passport::actingAs(User::factory()->role(Role::Contributor)->create(), guard: 'passport', client: $client);
+
+    expect(listedMcpTools())
+        ->toContain('run-command', 'upvote-playbook', 'request-tool')
+        ->not->toContain('run-command-approved', 'record-playbook', 'propose-playbook-change');
+});
+
+test('an oauth token keeps run-command-approved', function () {
+    Passport::actingAs(User::factory()->role(Role::Technician)->create(), guard: 'passport');
+
+    expect(listedMcpTools())->toContain('run-command-approved');
+});
+
+test('a personal access token gets the unattended instructions', function () {
+    $client = app(ClientRepository::class)->createPersonalAccessGrantClient('Agents', 'users');
+    Passport::actingAs(User::factory()->role(Role::Technician)->create(), guard: 'passport', client: $client);
+
+    expect(postJson('/mcp/pointer', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize', 'params' => ['protocolVersion' => '2025-06-18', 'capabilities' => (object) [], 'clientInfo' => ['name' => 'test', 'version' => '1']]])->assertOk()->json('result.instructions'))
+        ->toContain('This session is unattended')
+        ->not->toContain('run-command-approved');
 });
 
 test('an admin is refused on the admin server', function () {

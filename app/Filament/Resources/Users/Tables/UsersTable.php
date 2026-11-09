@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -51,6 +52,24 @@ class UsersTable
                         ]);
 
                         UserResource::sendTemporaryPasswordNotification($record, $password);
+                    }),
+                Action::make('createAgentToken')
+                    ->label(__('Create agent token'))
+                    ->icon(Heroicon::OutlinedCommandLine)
+                    ->authorize('update')
+                    ->requiresConfirmation()
+                    ->modalDescription(__('The token lets an automated agent use the MCP server as this user, with no one there to approve commands.'))
+                    ->action(function (User $record, ListUsers $livewire): void {
+                        $livewire->replaceMountedAction('showAgentToken', ['token' => $record->createToken('Agent token')->accessToken]);
+                    }),
+                Action::make('revokeAgentTokens')
+                    ->label(__('Revoke agent tokens'))
+                    ->icon(Heroicon::OutlinedNoSymbol)
+                    ->color('danger')
+                    ->authorize('update')
+                    ->requiresConfirmation()
+                    ->action(function (User $record): void {
+                        $record->agentTokens()->update(['revoked' => true]);
                     }),
                 DeleteAction::make()
                     ->hidden(fn (User $record): bool => $record->is(auth()->user())),

@@ -5,6 +5,8 @@ use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Passport\ClientRepository;
+use Laravel\Passport\Token;
 use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
@@ -28,6 +30,38 @@ test('resetting a password generates a new temporary one and forces a change', f
     expect($user->must_change_password)->toBeTrue();
     expect(Hash::check($password, $user->password))->toBeTrue();
     expect(Hash::check('password', $user->password))->toBeFalse();
+});
+
+test('creating an agent token issues a personal access token', function () {
+    app(ClientRepository::class)->createPersonalAccessGrantClient('Agents', 'users');
+    actingAs(User::factory()->role(Role::Admin)->create());
+    $agent = User::factory()->role(Role::Technician)->create();
+
+    $page = Livewire::test(ListUsers::class)
+        ->callAction(TestAction::make('createAgentToken')->table($agent))
+        ->assertActionMounted('showAgentToken');
+
+    $token = $page->get('mountedActions.0.arguments.token');
+
+    expect($token)->toBeString()->not->toBeEmpty()
+        ->and($agent->agentTokens()->count())->toBe(1);
+    $page->assertMountedActionModalSee($token);
+});
+
+test('revoking agent tokens leaves the oauth tokens alone', function () {
+    $clients = app(ClientRepository::class);
+    $clients->createPersonalAccessGrantClient('Agents', 'users');
+    $oauthClient = $clients->createAuthorizationCodeGrantClient('Claude Code', ['http://localhost/callback']);
+    actingAs(User::factory()->role(Role::Admin)->create());
+    $agent = User::factory()->role(Role::Technician)->create();
+    $agent->createToken('Agent token');
+    $oauthToken = Token::forceCreate(['id' => 'oauth-token', 'user_id' => $agent->id, 'client_id' => $oauthClient->id, 'revoked' => false, 'expires_at' => now()->addDay()]);
+
+    Livewire::test(ListUsers::class)
+        ->callAction(TestAction::make('revokeAgentTokens')->table($agent));
+
+    expect($agent->tokens()->sole()->revoked)->toBeTrue()
+        ->and($oauthToken->refresh()->revoked)->toBeFalse();
 });
 
 test('admins cannot delete themselves', function () {

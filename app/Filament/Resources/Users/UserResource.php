@@ -9,9 +9,12 @@ use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Tables\UsersTable;
 use App\Models\User;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontFamily;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
@@ -42,6 +45,27 @@ class UserResource extends Resource
             'create' => CreateUser::route('/create'),
             'edit' => EditUser::route('/{record}/edit'),
         ];
+    }
+
+    /**
+     * Modal that shows a new agent token once, mounted with the token as the `token` argument.
+     */
+    public static function showAgentTokenAction(): Action
+    {
+        return Action::make('showAgentToken')
+            ->modalHeading(__('Token created'))
+            ->modalDescription(__('Copy it now, it will not be shown again.'))
+            ->schema(fn (array $arguments): array => [
+                TextEntry::make('token')
+                    ->hiddenLabel()
+                    ->state($arguments['token'] ?? null)
+                    ->fontFamily(FontFamily::Mono)
+                    ->copyable(),
+            ])
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel(__('Done'))
+            ->closeModalByClickingAway(false)
+            ->closeModalByEscaping(false);
     }
 
     /**

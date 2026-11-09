@@ -3,6 +3,7 @@
 use App\Enums\Role;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
+use Laravel\Passport\Client;
 use Spatie\Permission\Models\Permission as PermissionModel;
 use Spatie\Permission\Models\Role as RoleModel;
 use Spatie\Permission\PermissionRegistrar;
@@ -29,6 +30,13 @@ test('seeds the roles with their permissions on an empty database', function () 
 
     expect(RoleModel::findByName(Role::Technician->value)->permissions->pluck('name')->all())->toBe(['use mcp'])
         ->and(RoleModel::findByName(Role::Admin->value)->permissions)->toHaveCount(4);
+});
+
+test('creates the personal access client once', function () {
+    seed(DatabaseSeeder::class);
+    seed(DatabaseSeeder::class);
+
+    expect(Client::all()->filter(fn (Client $client): bool => $client->hasGrantType('personal_access')))->toHaveCount(1);
 });
 
 test('skips when any user already exists', function () {

@@ -62,7 +62,7 @@ class RecordPlaybook extends Tool
     {
         $user = $request->user();
 
-        return $user instanceof User && $user->can(Permission::ManagePlaybooks);
+        return $user instanceof User && $user->can(Permission::ManagePlaybooks) && ! $user->isHeadless();
     }
 
     /**

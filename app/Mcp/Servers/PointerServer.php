@@ -63,23 +63,36 @@ use App\Mcp\Tools\SystemTime;
 use App\Mcp\Tools\UpvotePlaybook;
 use App\Mcp\Tools\UpvoteToolRequest;
 use App\Mcp\Tools\WhatIsIt;
+use App\Models\User;
 use Laravel\Mcp\Server;
-use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Attributes\Version;
 
 #[Name('Pointer')]
 #[Version('0.0.1')]
-#[Instructions(<<<'INSTRUCTIONS'
-    This server gives read access to a remote Nethesis machine, identified by its SOS id, to diagnose problems on it. Every command runs on that machine, never on the local computer: do not use local shell, file or web tools for anything about the machine. Tool calls run one at a time.
-    Pass the SOS id the user gave as `sos_id` to every tool that takes one. Call `what-is-it` first: its answer is the `system_type` for the other tools and decides which ones apply. The NethSecurity tools only work on `nethsecurity` machines.
-    Call `list-playbook-tags` and `search-playbooks` before investigating and open the matching ones with `get-playbook`, then search the documentation of the product the machine runs: `search-nsec-documentation` for `nethsecurity`, `search-ns8-documentation` for `nethserver`, plus `search-nethvoice-documentation` for NethVoice and telephony problems.
-    When the investigation ends, report to the user first, then ask before saving: upvote the playbooks whose checks helped with `upvote-playbook` and, when those tools are listed, propose a change to one that lacked a useful check with `propose-playbook-change`, or record a new one with `record-playbook`. Save only what the user confirmed or the machine showed.
-    When a tool you need is missing, load the full tool list to make sure: each tool's description names the commands it replaces. Only when no other tool can answer, use `run-command`; keep the command short and readable.
-    When `run-command` refuses a command, search `search-tool-requests` and either upvote the matching request with `upvote-tool-request` or create one with `request-tool`, then pass its id to `run-command-approved`.
-    INSTRUCTIONS)]
 class PointerServer extends Server
 {
+    private const string INSTRUCTIONS = <<<'INSTRUCTIONS'
+        This server gives read access to a remote Nethesis machine, identified by its SOS id, to diagnose problems on it. Every command runs on that machine, never on the local computer: do not use local shell, file or web tools for anything about the machine. Tool calls run one at a time.
+        Pass the SOS id the user gave as `sos_id` to every tool that takes one. Call `what-is-it` first: its answer is the `system_type` for the other tools and decides which ones apply. The NethSecurity tools only work on `nethsecurity` machines.
+        Call `list-playbook-tags` and `search-playbooks` before investigating and open the matching ones with `get-playbook`, then search the documentation of the product the machine runs: `search-nsec-documentation` for `nethsecurity`, `search-ns8-documentation` for `nethserver`, plus `search-nethvoice-documentation` for NethVoice and telephony problems.
+        When the investigation ends, report to the user first, then ask before saving: upvote the playbooks whose checks helped with `upvote-playbook` and, when those tools are listed, propose a change to one that lacked a useful check with `propose-playbook-change`, or record a new one with `record-playbook`. Save only what the user confirmed or the machine showed.
+        When a tool you need is missing, load the full tool list to make sure: each tool's description names the commands it replaces. Only when no other tool can answer, use `run-command`; keep the command short and readable.
+        When `run-command` refuses a command, search `search-tool-requests` and either upvote the matching request with `upvote-tool-request` or create one with `request-tool`, then pass its id to `run-command-approved`.
+        INSTRUCTIONS;
+
+    private const string HEADLESS_INSTRUCTIONS = <<<'INSTRUCTIONS'
+        This server gives read access to a remote Nethesis machine, identified by its SOS id, to diagnose problems on it. Every command runs on that machine, never on the local computer: do not use local shell, file or web tools for anything about the machine. Tool calls run one at a time.
+        This session is unattended: no one is there to answer questions or approve anything, so never wait for a reply.
+        Pass the SOS id you were given as `sos_id` to every tool that takes one. Call `what-is-it` first: its answer is the `system_type` for the other tools and decides which ones apply. The NethSecurity tools only work on `nethsecurity` machines.
+        Call `list-playbook-tags` and `search-playbooks` before investigating and open the matching ones with `get-playbook`, then search the documentation of the product the machine runs: `search-nsec-documentation` for `nethsecurity`, `search-ns8-documentation` for `nethserver`, plus `search-nethvoice-documentation` for NethVoice and telephony problems.
+        When the investigation ends, upvote the playbooks whose checks the machine proved useful with `upvote-playbook`.
+        When a tool you need is missing, load the full tool list to make sure: each tool's description names the commands it replaces. Only when no other tool can answer, use `run-command`; keep the command short and readable.
+        When `run-command` refuses a command, it cannot run in this session: search `search-tool-requests` and either upvote the matching request with `upvote-tool-request` or create one with `request-tool`, then go on without it.
+        INSTRUCTIONS;
+
+    protected string $instructions = self::INSTRUCTIONS;
+
     protected array $tools = [
         WhatIsIt::class,
         ListDevices::class,
@@ -146,4 +159,13 @@ class PointerServer extends Server
     protected array $prompts = [
         PointerPrompt::class,
     ];
+
+    protected function boot(): void
+    {
+        $user = auth()->user();
+
+        if ($user instanceof User && $user->isHeadless()) {
+            $this->instructions = self::HEADLESS_INSTRUCTIONS;
+        }
+    }
 }

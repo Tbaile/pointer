@@ -4,6 +4,7 @@ namespace App\Mcp\Tools;
 
 use App\Contracts\RemoteExecutor;
 use App\Events\CommandClassified;
+use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Laravel\Ai\Classification;
@@ -51,6 +52,11 @@ class RunCommand extends Tool
      * What a refused command needs before it can go through `run-command-approved`.
      */
     private const string APPROVAL_STEPS = 'Call `search-tool-requests`, then `upvote-tool-request` on the request for the capability you are missing, or `request-tool` when there is none. Then call `run-command-approved` with the same `command` and that request\'s id as `tool_request_id`, so the user can review it.';
+
+    /**
+     * What a refused command needs in a headless session, where `run-command-approved` is not offered.
+     */
+    private const string HEADLESS_STEPS = 'This session has no one to approve it, so it cannot run here. Call `search-tool-requests`, then `upvote-tool-request` on the request for the capability you are missing, or `request-tool` when there is none.';
 
     public function __construct(private readonly RemoteExecutor $executor) {}
 
@@ -112,7 +118,7 @@ class RunCommand extends Tool
         } catch (Throwable $exception) {
             CommandClassified::dispatch($validated['sos_id'], $request->user(), $validated['command'], error: $exception->getMessage());
 
-            return Response::text('Not run: the command could not be classified. '.self::APPROVAL_STEPS);
+            return Response::text('Not run: the command could not be classified. '.$this->refusalSteps($request));
         }
 
         $flagged = array_keys(array_filter($probabilities, fn (float $probability): bool => $probability >= self::RISK_THRESHOLD));
@@ -120,7 +126,7 @@ class RunCommand extends Tool
         CommandClassified::dispatch($validated['sos_id'], $request->user(), $validated['command'], $classification, $probabilities, $flagged);
 
         if ($flagged !== []) {
-            return Response::text('Not run: flagged as '.implode(', ', $flagged).'. '.self::APPROVAL_STEPS);
+            return Response::text('Not run: flagged as '.implode(', ', $flagged).'. '.$this->refusalSteps($request));
         }
 
         try {
@@ -134,6 +140,16 @@ class RunCommand extends Tool
             'output' => $result->output,
             'error_output' => $result->errorOutput,
         ]);
+    }
+
+    /**
+     * What the agent has to do after a refusal.
+     */
+    private function refusalSteps(Request $request): string
+    {
+        $user = $request->user();
+
+        return $user instanceof User && $user->isHeadless() ? self::HEADLESS_STEPS : self::APPROVAL_STEPS;
     }
 
     /**

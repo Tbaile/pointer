@@ -4,6 +4,7 @@ namespace App\Mcp\Tools;
 
 use App\Contracts\RemoteExecutor;
 use App\Models\ToolRequest;
+use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Illuminate\Validation\Rule;
@@ -35,6 +36,16 @@ class RunCommandApproved extends Tool
     protected ?array $meta = ['anthropic/requiresUserInteraction' => true];
 
     public function __construct(private readonly RemoteExecutor $executor) {}
+
+    /**
+     * Determine whether the tool is offered to the user.
+     */
+    public function shouldRegister(Request $request): bool
+    {
+        $user = $request->user();
+
+        return ! ($user instanceof User && $user->isHeadless());
+    }
 
     /**
      * Handle the tool request.
