@@ -26,6 +26,7 @@
         "blaze-optimize",
         "laravel-permission-development",
         "build-requested-tool",
-        "rewrite-playbooks"
+        "rewrite-playbooks",
+        "typesafe-ai"
     ]
 }
