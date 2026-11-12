@@ -37,6 +37,14 @@ test('it masks passwords inside URLs', function () {
     expect((string) $result->content())->toBe('Aug  2 03:00:01 fw update-packages: Downloading https://NETH-1234:[masked:hmac-sha256:'.substr(hash_hmac('sha256', 's3cr3t', 'test-key'), 0, 12)."]@distfeed.example.com/packages.adb\n");
 });
 
+test('it masks the secret fields of the logged api request bodies', function () {
+    $executor = new FakeRemoteExecutor(new CommandResult('Nov 12 13:54:31 fw nethsecurity-api[7618]: nethsecurity_api 2026/11/12 13:54:31 middleware.go:237: [INFO][AUTH] authorization success for user nethsupport. POST /api/ubus/call {"path":"ns.wireguard","method":"edit-tunnel","payload":{"id":"wg1","peer_private_key":"cHJpdmF0ZQ==","pre_shared_key":"cHJlc2hhcmVk"}}'."\n"));
+
+    $result = readSystemLog($executor);
+
+    expect((string) $result->content())->toBe('Nov 12 13:54:31 fw nethsecurity-api[7618]: nethsecurity_api 2026/11/12 13:54:31 middleware.go:237: [INFO][AUTH] authorization success for user nethsupport. POST /api/ubus/call {"path":"ns.wireguard","method":"edit-tunnel","payload":{"id":"wg1","peer_private_key":"[masked:hmac-sha256:'.substr(hash_hmac('sha256', 'cHJpdmF0ZQ==', 'test-key'), 0, 12).']","pre_shared_key":"[masked:hmac-sha256:'.substr(hash_hmac('sha256', 'cHJlc2hhcmVk', 'test-key'), 0, 12)."]\"}}\n");
+});
+
 test('it filters the lines with the pattern as a perl regex', function () {
     $executor = new FakeRemoteExecutor(new CommandResult(''));
 

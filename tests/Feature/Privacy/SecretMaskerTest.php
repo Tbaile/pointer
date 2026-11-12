@@ -74,6 +74,32 @@ test('it masks the values of keys that look like secrets, at any depth', functio
     ]);
 });
 
+test('it masks the json fields that look like secrets inside a text', function () {
+    $masked = (new SecretMasker('test-key'))->maskJsonSecretFields(
+        '{"id":"wg1","peer_private_key":"priv+/=","Pre_Shared_Key": "psk","note":"a \"quoted\" key"}',
+    );
+
+    expect($masked)->toBe('{"id":"wg1","peer_private_key":"'.maskedToken('priv+/=').'","Pre_Shared_Key": "'.maskedToken('psk').'","note":"a \"quoted\" key"}');
+});
+
+test('it masks a json config field', function () {
+    $masked = (new SecretMasker('test-key'))->maskJsonSecretFields('{"config":"W0ludGVyZmFjZV0="}');
+
+    expect($masked)->toBe('{"config":"'.maskedToken('W0ludGVyZmFjZV0=').'"}');
+});
+
+test('it masks a json secret value containing escaped quotes whole', function () {
+    $masked = (new SecretMasker('test-key'))->maskJsonSecretFields('{"password":"a\"b","user":"root"}');
+
+    expect($masked)->toBe('{"password":"'.maskedToken('a\"b').'","user":"root"}');
+});
+
+test('it leaves json secret fields that are not strings untouched', function () {
+    $masked = (new SecretMasker('test-key'))->maskJsonSecretFields('{"pre_shared_key":true,"tokens":["a"]}');
+
+    expect($masked)->toBe('{"pre_shared_key":true,"tokens":["a"]}');
+});
+
 test('it masks every value inside a list field', function () {
     $masked = (new SecretMasker('test-key'))->mask(['keys' => ['one', 'two']], ['keys']);
 

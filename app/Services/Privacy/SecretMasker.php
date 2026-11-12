@@ -9,6 +9,8 @@ use Illuminate\Container\Attributes\Config;
  */
 final readonly class SecretMasker
 {
+    private const string SECRET_KEY_PATTERN = 'pass|secret|token|key|code|jwt|credential';
+
     public function __construct(#[Config('app.key')] private string $key) {}
 
     /**
@@ -34,7 +36,7 @@ final readonly class SecretMasker
     public function maskSecretKeys(array $data): array
     {
         foreach ($data as $key => $value) {
-            if (is_string($key) && preg_match('/pass|secret|token|key|code|jwt|credential/i', $key) === 1) {
+            if (is_string($key) && preg_match('/'.self::SECRET_KEY_PATTERN.'/i', $key) === 1) {
                 $data[$key] = $this->maskValue($value);
             } elseif (is_array($value)) {
                 $data[$key] = $this->maskSecretKeys($value);
@@ -62,6 +64,18 @@ final readonly class SecretMasker
             fn (array $matches): string => $matches[1].$this->maskValue($matches[2]).'@',
             $value,
         );
+    }
+
+    /**
+     * Mask the string values of JSON fields that look like secrets, plus `config`, inside a text such as a log line.
+     */
+    public function maskJsonSecretFields(string $text): string
+    {
+        return preg_replace_callback(
+            '/("(?:[^"\\\\]*(?:'.self::SECRET_KEY_PATTERN.')[^"\\\\]*|config)"\s*:\s*")((?:[^"\\\\]|\\\\.)*)"/i',
+            fn (array $matches): string => $matches[1].$this->maskValue($matches[2]).'"',
+            $text,
+        ) ?? $text;
     }
 
     /**
