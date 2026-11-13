@@ -87,8 +87,7 @@ class PointerServer extends Server
         Pass the SOS id you were given as `sos_id` to every tool that takes one. Call `what-is-it` first: its answer is the `system_type` for the other tools and decides which ones apply. The NethSecurity tools only work on `nethsecurity` machines.
         Call `list-playbook-tags` and `search-playbooks` before investigating and open the matching ones with `get-playbook`, then search the documentation of the product the machine runs: `search-nsec-documentation` for `nethsecurity`, `search-ns8-documentation` for `nethserver`, plus `search-nethvoice-documentation` for NethVoice and telephony problems.
         When the investigation ends, upvote the playbooks whose checks the machine proved useful with `upvote-playbook`.
-        When a tool you need is missing, load the full tool list to make sure: each tool's description names the commands it replaces. Only when no other tool can answer, use `run-command`; keep the command short and readable.
-        When `run-command` refuses a command, it cannot run in this session: search `search-tool-requests` and either upvote the matching request with `upvote-tool-request` or create one with `request-tool`, then go on without it.
+        When a tool you need is missing, load the full tool list to make sure: each tool's description names the commands it replaces. When no tool can answer, say what you could not check and go on without it.
         INSTRUCTIONS;
 
     protected string $instructions = self::INSTRUCTIONS;

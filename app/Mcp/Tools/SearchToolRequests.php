@@ -4,6 +4,7 @@ namespace App\Mcp\Tools;
 
 use App\Enums\SystemType;
 use App\Models\ToolRequest;
+use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\JsonSchema\Types\Type;
@@ -27,6 +28,16 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
     DESCRIPTION)]
 class SearchToolRequests extends Tool
 {
+    /**
+     * Determine whether the tool is offered to the user.
+     */
+    public function shouldRegister(Request $request): bool
+    {
+        $user = $request->user();
+
+        return ! ($user instanceof User && $user->isHeadless());
+    }
+
     /**
      * Handle the tool request.
      */

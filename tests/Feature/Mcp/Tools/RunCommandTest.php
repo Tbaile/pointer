@@ -13,8 +13,6 @@ use Laravel\Ai\Responses\Data\TextUsage;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
-use Laravel\Passport\ClientRepository;
-use Laravel\Passport\Passport;
 use Tests\Fakes\FakeRemoteExecutor;
 
 use function Pest\Laravel\actingAs;
@@ -97,18 +95,6 @@ test('it refuses a command flagged with a risk without running it', function () 
         ->toContain('call `run-command-approved` with the same `command` and that request\'s id as `tool_request_id`');
     expect($executor->calledWithCommand)->toBeNull();
     Classification::assertClassified(fn ($prompt) => $prompt->contains('runagent -m webtop1 mysql') && $prompt->count() === 7);
-});
-
-test('it refuses a flagged command without pointing to run-command-approved on a personal access token', function () {
-    Classification::fake([riskAnswers(['writes_files' => 0.9])]);
-    $client = app(ClientRepository::class)->createPersonalAccessGrantClient('Agents', 'users');
-    Passport::actingAs(User::factory()->create(), guard: 'passport', client: $client);
-
-    $result = runCommand(new FakeRemoteExecutor(new CommandResult('')), ['command' => 'rm /tmp/x']);
-
-    expect((string) $result->content())
-        ->toStartWith('Not run: flagged as writes_files. This session has no one to approve it')
-        ->not->toContain('run-command-approved');
 });
 
 test('it refuses a risk at the threshold without running it', function () {

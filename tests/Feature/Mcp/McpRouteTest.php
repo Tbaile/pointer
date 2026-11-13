@@ -58,19 +58,19 @@ test('a technician cannot call record-playbook', function () {
     ])->assertJsonPath('error.message', 'Tool [record-playbook] not found.');
 });
 
-test('a personal access token hides the tools that wait for a person', function () {
+test('a personal access token hides run-command, the tool requests and the tools that wait for a person', function () {
     $client = app(ClientRepository::class)->createPersonalAccessGrantClient('Agents', 'users');
     Passport::actingAs(User::factory()->role(Role::Contributor)->create(), guard: 'passport', client: $client);
 
     expect(listedMcpTools())
-        ->toContain('run-command', 'upvote-playbook', 'request-tool')
-        ->not->toContain('run-command-approved', 'record-playbook', 'propose-playbook-change');
+        ->toContain('what-is-it', 'upvote-playbook')
+        ->not->toContain('run-command', 'run-command-approved', 'search-tool-requests', 'request-tool', 'upvote-tool-request', 'record-playbook', 'propose-playbook-change');
 });
 
-test('an oauth token keeps run-command-approved', function () {
+test('an oauth token keeps run-command and the tool requests', function () {
     Passport::actingAs(User::factory()->role(Role::Technician)->create(), guard: 'passport');
 
-    expect(listedMcpTools())->toContain('run-command-approved');
+    expect(listedMcpTools())->toContain('run-command', 'run-command-approved', 'search-tool-requests', 'request-tool', 'upvote-tool-request');
 });
 
 test('a personal access token gets the unattended instructions', function () {
@@ -79,7 +79,7 @@ test('a personal access token gets the unattended instructions', function () {
 
     expect(postJson('/mcp/pointer', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize', 'params' => ['protocolVersion' => '2025-06-18', 'capabilities' => (object) [], 'clientInfo' => ['name' => 'test', 'version' => '1']]])->assertOk()->json('result.instructions'))
         ->toContain('This session is unattended')
-        ->not->toContain('run-command-approved');
+        ->not->toContain('run-command', 'request-tool');
 });
 
 test('an admin is refused on the admin server', function () {

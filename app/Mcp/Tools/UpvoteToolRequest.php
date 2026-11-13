@@ -3,6 +3,7 @@
 namespace App\Mcp\Tools;
 
 use App\Models\ToolRequest;
+use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Illuminate\Validation\Rule;
@@ -22,6 +23,16 @@ use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
 #[Description('Add one to the count of an existing tool request found with `search-tool-requests`, when you need the same capability. Call it at most once per request in a session.')]
 class UpvoteToolRequest extends Tool
 {
+    /**
+     * Determine whether the tool is offered to the user.
+     */
+    public function shouldRegister(Request $request): bool
+    {
+        $user = $request->user();
+
+        return ! ($user instanceof User && $user->isHeadless());
+    }
+
     /**
      * Handle the tool request.
      */
