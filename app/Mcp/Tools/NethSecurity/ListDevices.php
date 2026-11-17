@@ -22,5 +22,6 @@ class ListDevices extends NsApiTool
         'all_devices.*.iface.password',
         'all_devices.*.iface.pincode',
         'all_devices.*.iface.pppd_options',
+        'all_devices.*.hotspot.secret',
     ];
 }

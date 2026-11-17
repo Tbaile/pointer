@@ -47,6 +47,20 @@ test('it masks the password of a PPPoE interface', function () {
     ]]);
 });
 
+test('it masks the secret of the hotspot', function () {
+    $executor = new FakeRemoteExecutor('{"all_devices":[{"name":"eth2","hotspot":{"interface":"eth2","hotspot_id":"1234","secret":"hotspotSecret"}}]}');
+
+    $result = listDevices($executor);
+
+    expect($result->getStructuredContent())->toBe(['all_devices' => [
+        ['name' => 'eth2', 'hotspot' => [
+            'interface' => 'eth2',
+            'hotspot_id' => '1234',
+            'secret' => '[masked:hmac-sha256:'.substr(hash_hmac('sha256', 'hotspotSecret', 'test-key'), 0, 12).']',
+        ]],
+    ]]);
+});
+
 test('it reports a failed call as an error', function () {
     $result = listDevices(new FakeRemoteExecutor(new RuntimeException('Connection refused.')));
 
