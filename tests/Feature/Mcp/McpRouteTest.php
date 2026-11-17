@@ -82,6 +82,15 @@ test('a personal access token gets the unattended instructions', function () {
         ->not->toContain('run-command', 'request-tool');
 });
 
+test('the instructions list the tools the user gets', function () {
+    Passport::actingAs(User::factory()->role(Role::Technician)->create(), guard: 'passport');
+
+    expect(postJson('/mcp/pointer', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize', 'params' => ['protocolVersion' => '2025-06-18', 'capabilities' => (object) [], 'clientInfo' => ['name' => 'test', 'version' => '1']]])->assertOk()->json('result.instructions'))
+        ->toContain("- `what-is-it`: Identify which product the target machine runs. Use it instead of `cat /etc/os-release`.\n")
+        ->toContain('- `nft-list`: List the nftables ruleset of a NethSecurity firewall or a NethServer 8 node (`nft list`), with the rule and named counters.')
+        ->not->toContain('`record-playbook`:');
+});
+
 test('an admin is refused on the admin server', function () {
     Passport::actingAs(User::factory()->role(Role::Admin)->create(), guard: 'passport');
 

@@ -65,9 +65,11 @@ use App\Mcp\Tools\UpvotePlaybook;
 use App\Mcp\Tools\UpvoteToolRequest;
 use App\Mcp\Tools\WhatIsIt;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Attributes\Version;
+use Laravel\Mcp\Server\Tool;
 
 #[Name('Pointer')]
 #[Version('0.0.1')]
@@ -168,5 +170,11 @@ class PointerServer extends Server
         if ($user instanceof User && $user->isHeadless()) {
             $this->instructions = self::HEADLESS_INSTRUCTIONS;
         }
+
+        $toolList = $this->createContext()->tools()
+            ->map(fn (Tool $tool): string => "- `{$tool->name()}`: ".Str::before($tool->description(), "\n"))
+            ->implode("\n");
+
+        $this->instructions .= "\n\nAvailable tools:\n".$toolList;
     }
 }
