@@ -27,7 +27,8 @@ use Throwable;
     - `pattern` is a Perl-compatible regex (`grep -P`), matched ignoring case, e.g. `(nginx|procd)\[\d+\]: .*bind\(\)`. Drop lines with a lookahead: `^(?!.*victoria-metrics).*ns-plug`.
     - Match a time window with the timestamp prefix, e.g. `^Oct +9 10:`. Days 1-9 are padded with two spaces.
     - Returns the last `lines` matching lines, 100 by default. Narrow the `pattern` rather than raising `lines`.
-    - `source` `memory` (default): the log kept in RAM, lost on reboot, only the current file and one rotated copy. `storage`: the log kept on the data storage for a year, empty when no data storage is configured. It scans every rotated file, so anchor the `pattern` on the date, e.g. `^Oct +9 `.
+    - `source` `memory` (default): the log kept in RAM, lost on reboot, only the current file and one rotated copy. `storage`: on releases older than 8.9.0, the log kept on the data storage for a year, empty when no data storage is configured. It scans every rotated file, so anchor the `pattern` on the date, e.g. `^Oct +9 `.
+    - From 8.9.0 the history is in VictoriaLogs: use `victoria-logs-query` for anything older than the `memory` log.
     - Passwords inside URLs (`https://<user>:<password>@...`) and secret fields of the API request bodies (e.g. `"peer_private_key":"..."`) are masked.
     Use it instead of `logread`, `dmesg`, or `grep` and `zcat` on `/var/log/messages` and `/mnt/data/log/messages*`.
     DESCRIPTION)]

@@ -24,6 +24,7 @@ use App\Mcp\Tools\NethSecurity\ReadSystemLog;
 use App\Mcp\Tools\NethSecurity\ServiceStatus;
 use App\Mcp\Tools\NethSecurity\TcpProbe;
 use App\Mcp\Tools\NethSecurity\Traceroute;
+use App\Mcp\Tools\NethSecurity\VictoriaLogsQuery;
 use App\Mcp\Tools\NethSecurity\VictoriaQuery;
 use App\Mcp\Tools\NethSecurity\WireguardStatus;
 use App\Mcp\Tools\NethServer\AsteriskCli;
@@ -96,6 +97,7 @@ class PointerServer extends Server
         WhatIsIt::class,
         ListDevices::class,
         VictoriaQuery::class,
+        VictoriaLogsQuery::class,
         ListUciConfigs::class,
         GetUciConfig::class,
         GetUciSection::class,
