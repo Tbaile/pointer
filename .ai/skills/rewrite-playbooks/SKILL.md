@@ -74,8 +74,8 @@ Check everything before the first write: both files present per task, body start
 Then apply in this order, one call per entry:
 
 1. `settle-playbook-proposal` for every entry in `manifest.json` `proposals`
-2. `update-playbook` for every `update` task, with the body file's content (trimmed, one trailing newline), its title, tags and `base_body_sha1`
-3. `create-playbook` for every `create` task
+2. `update-playbook` for every `update` task, with the body file's content minus its `# <title>` line (trimmed, one trailing newline; stored bodies start at the first `##` section), its title, tags and `base_body_sha1`
+3. `create-playbook` for every `create` task, with the body prepared the same way
 4. `delete-playbook` for every entry in `deletes`, with `merged_into` when it has one
 
 Each write is applied right away, there's no transaction across calls. When one is refused, stop and report what was already applied and what's left. Updates keep the id, `verdict` and `verified_*`. Deleting a playbook cascades its proposals and tag links.

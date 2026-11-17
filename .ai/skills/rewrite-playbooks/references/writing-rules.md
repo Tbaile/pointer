@@ -23,9 +23,9 @@ The agent searching is at point A: what the technician reported. The playbook wa
 
 ## Tools first
 
-- Use the dedicated tool for every step one exists for (`read-system-log`, `service-status`, `nft-list`, `conntrack-list`, `process-list`, `network-state`, `disk-usage`, `file-checksums`, `kernel-counters`, `ha-status`, `mwan3-status`, `wireguard-status`, `list-modules`, `module-containers`, `module-environment`, `read-logs`, `audit-log`, `cluster-action`, `firewall-status`, the `nsec-*` and `ns8-*` probes). Check the tool's `schema()` in `app/Mcp/Tools/**` for its exact name and arguments: don't write arguments from memory.
+- Use the dedicated tool for every step one exists for (`service-status`, `nft-list`, `conntrack-list`, `process-list`, `network-state`, `disk-usage`, `file-checksums`, `kernel-counters`, `ha-status`, `mwan3-status`, `wireguard-status`, `list-modules`, `module-containers`, `module-environment`, `read-logs`, `audit-log`, `cluster-action`, `firewall-status`, the `nsec-*` and `ns8-*` probes). Check the tool's `schema()` in `app/Mcp/Tools/**` for its exact name and arguments: don't write arguments from memory.
 - `run-command` stays only where no tool exists. Keep the command short, and say what it reads.
-- `read-system-log {"source": "storage"}` scans every weekly file and can time out: narrow the pattern with a month or day prefix, and prefer VictoriaMetrics for anything over a few days.
+- A NethSecurity log step says "read the logs" with the time window and what to look for, never the tool, source or pattern: where the logs live depends on the release, and the tool descriptions tell the agent how.
 - `run-command` runs one call at a time with a 30 s cap: captures or probes that must overlap are run by the technician by hand, and the playbook says so.
 - A VictoriaMetrics step is a complete `victoria-query` call, not a metric name.
 
