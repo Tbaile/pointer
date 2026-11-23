@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM dunglas/frankenphp:1.13.5-php8.5.12-alpine AS base
+FROM dunglas/frankenphp:1.14.0-php8.5.13-alpine AS base
 
 RUN apk add --no-cache openssh-client-default
 
@@ -55,7 +55,7 @@ RUN mkdir -p storage/app/private storage/app/public storage/framework/cache/data
     && composer check-platform-reqs --no-dev \
     && composer dump-autoload --optimize --no-dev
 
-FROM node:26.13.0-alpine AS assets
+FROM node:26.13.1-alpine AS assets
 
 WORKDIR /app
 
