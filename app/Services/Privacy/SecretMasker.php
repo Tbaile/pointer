@@ -79,6 +79,18 @@ final readonly class SecretMasker
     }
 
     /**
+     * Mask the non-empty values of the `KEY=value` lines whose key looks like a secret, inside a text such as an environment file.
+     */
+    public function maskEnvSecretLines(string $text): string
+    {
+        return preg_replace_callback(
+            '/^(\w*(?:'.self::SECRET_KEY_PATTERN.')\w*=)(.+)$/im',
+            fn (array $matches): string => $matches[1].$this->maskValue($matches[2]),
+            $text,
+        ) ?? $text;
+    }
+
+    /**
      * @param  list<string>  $segments
      */
     private function maskPath(mixed $value, array $segments): mixed

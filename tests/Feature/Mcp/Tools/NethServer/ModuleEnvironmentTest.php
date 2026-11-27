@@ -2,6 +2,7 @@
 
 use App\Contracts\RemoteExecutor;
 use App\Mcp\Tools\NethServer\ModuleEnvironment;
+use App\Services\Privacy\SecretMasker;
 use App\Services\Remote\CommandResult;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
@@ -13,7 +14,7 @@ use Tests\Fakes\FakeRemoteExecutor;
  */
 function moduleEnvironment(RemoteExecutor $executor, array $arguments): Response
 {
-    return (new ModuleEnvironment($executor))
+    return (new ModuleEnvironment($executor, new SecretMasker('test-key')))
         ->handle(new Request(['sos_id' => 'a1b2c3d4-0000-0000-0000-000000000000', ...$arguments]));
 }
 
@@ -26,6 +27,16 @@ test('it reads only the environment state file of the module', function () {
     expect((string) $result->content())->toBe("MODULE_ID=webtop3\nNODE_ID=1\n");
     expect($executor->calledWithMachineUuid)->toBe('a1b2c3d4-0000-0000-0000-000000000000');
     expect($executor->calledWithCommand)->toBe("runagent -m 'webtop3' cat environment 2>&1");
+});
+
+test('it masks the values of keys that look like secrets', function () {
+    $executor = new FakeRemoteExecutor(new CommandResult("LOKI_API_AUTH_USERNAME=admin\nLOKI_API_AUTH_PASSWORD=s3cret\n"));
+
+    $result = moduleEnvironment($executor, ['name' => 'loki1']);
+
+    expect((string) $result->content())->toBe(
+        "LOKI_API_AUTH_USERNAME=admin\nLOKI_API_AUTH_PASSWORD=[masked:hmac-sha256:".substr(hash_hmac('sha256', 's3cret', 'test-key'), 0, 12)."]\n",
+    );
 });
 
 test('it rejects a name that is not a plain id', function () {

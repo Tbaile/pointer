@@ -105,3 +105,13 @@ test('it masks every value inside a list field', function () {
 
     expect($masked)->toBe(['keys' => [maskedToken('one'), maskedToken('two')]]);
 });
+
+test('it masks the env lines whose key looks like a secret, leaving empty values alone', function () {
+    $masked = (new SecretMasker('test-key'))->maskEnvSecretLines(
+        "LOKI_API_AUTH_USERNAME=admin\nLOKI_API_AUTH_PASSWORD=s3cr=t\nLOKI_LOGS_INGRESS_TOKEN=tok\nNETHVOICESECRETKEY=k\nOIDC_CLIENT_SECRET=\nTCP_PORT=20004\n",
+    );
+
+    expect($masked)->toBe(
+        "LOKI_API_AUTH_USERNAME=admin\nLOKI_API_AUTH_PASSWORD=".maskedToken('s3cr=t')."\nLOKI_LOGS_INGRESS_TOKEN=".maskedToken('tok')."\nNETHVOICESECRETKEY=".maskedToken('k')."\nOIDC_CLIENT_SECRET=\nTCP_PORT=20004\n",
+    );
+});

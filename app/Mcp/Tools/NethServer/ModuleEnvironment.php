@@ -3,6 +3,7 @@
 namespace App\Mcp\Tools\NethServer;
 
 use App\Contracts\RemoteExecutor;
+use App\Services\Privacy\SecretMasker;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Laravel\Mcp\Request;
@@ -22,13 +23,16 @@ use Throwable;
     Only works on `nethserver` machines.
 
     - Holds the module's own settings: `MODULE_ID`, `NODE_ID`, `IMAGE_URL`, the image of each container (`*_IMAGE`), the allocated `TCP_PORT`/`TCP_PORTS` and the module-specific keys.
-    - The other state files, with passwords and tokens, are not read.
+    - Values of keys that look like secrets (passwords, tokens, keys) are masked; the other state files are not read.
     - Only reaches the modules on the node of the current session: a module on another node returns `Cannot find module <id> in the local node`. `list-modules` shows each module's node; `start-node-support` opens a session on it.
     Use it instead of `runagent -m <module> cat environment`.
     DESCRIPTION)]
 class ModuleEnvironment extends Tool
 {
-    public function __construct(private readonly RemoteExecutor $executor) {}
+    public function __construct(
+        private readonly RemoteExecutor $executor,
+        private readonly SecretMasker $masker,
+    ) {}
 
     /**
      * Handle the tool request.
@@ -50,7 +54,7 @@ class ModuleEnvironment extends Tool
             return Response::error(trim($result->output) ?: "runagent exited with code {$result->exitCode}");
         }
 
-        return Response::text($result->output);
+        return Response::text($this->masker->maskEnvSecretLines($result->output));
     }
 
     /**
